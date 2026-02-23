@@ -91,6 +91,12 @@ Widget:
 4. Find `Skylight Weather`
 5. Add widget
 
+## Screenshots
+
+| Light | Dark |
+|---|---|
+| ![Main Light](docs/screenshots/main.png) | ![Main Dark](docs/screenshots/main-dark.png) |
+
 ## Tests
 
 Run tests:
