@@ -230,8 +230,11 @@ final class WeatherViewController: UIViewController {
         navigation.overrideUserInterfaceStyle = appSettings.colorScheme.uiInterfaceStyle
         navigation.modalPresentationStyle = .pageSheet
         if let sheet = navigation.sheetPresentationController {
-            sheet.detents = [.medium(), .large()]
+            sheet.detents = [.medium()]
+            sheet.selectedDetentIdentifier = .medium
             sheet.prefersGrabberVisible = true
+            sheet.prefersScrollingExpandsWhenScrolledToEdge = false
+            sheet.largestUndimmedDetentIdentifier = .medium
         }
         present(navigation, animated: true)
     }

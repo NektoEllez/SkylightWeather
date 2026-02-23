@@ -49,8 +49,11 @@ final class AppCoordinator: NSObject {
         navigation.modalPresentationStyle = .pageSheet
         navigation.presentationController?.delegate = self
         if let sheet = navigation.sheetPresentationController {
-            sheet.detents = [.medium(), .large()]
+            sheet.detents = [.medium()]
+            sheet.selectedDetentIdentifier = .medium
             sheet.prefersGrabberVisible = true
+            sheet.prefersScrollingExpandsWhenScrolledToEdge = false
+            sheet.largestUndimmedDetentIdentifier = .medium
         }
         return navigation
     }

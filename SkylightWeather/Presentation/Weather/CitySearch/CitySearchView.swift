@@ -8,6 +8,7 @@ import SwiftUI
 struct CitySearchView: View {
     @Environment(\.appSettings) private var settings
     @State private var viewModel: CitySearchViewModel
+    @FocusState private var isSearchFocused: Bool
     
     let onSelect: (String) -> Void
     let onCancel: () -> Void
@@ -23,50 +24,53 @@ struct CitySearchView: View {
     }
     
     var body: some View {
-        List {
-            if trimmedQuery.isEmpty {
-                hintRow(settings.string(.citySearchStartTyping))
-            } else if viewModel.suggestions.isEmpty {
-                hintRow(viewModel.isLoading ? settings.string(.citySearchLoading) : settings.string(.citySearchNoResults))
-            } else {
-                ForEach(viewModel.suggestions) { suggestion in
-                    Button {
-                        HapticManager.shared.selectionChanged()
-                        onSelect(suggestion.query)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(suggestion.title)
-                                .font(.body.weight(.semibold))
-                            
-                            if !suggestion.subtitle.isEmpty {
-                                Text(suggestion.subtitle)
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
+        VStack(spacing: 8) {
+            searchField
+
+            List {
+                if trimmedQuery.isEmpty {
+                    hintRow(settings.string(.citySearchStartTyping))
+                } else if viewModel.suggestions.isEmpty {
+                    hintRow(viewModel.isLoading ? settings.string(.citySearchLoading) : settings.string(.citySearchNoResults))
+                } else {
+                    ForEach(viewModel.suggestions) { suggestion in
+                        Button {
+                            HapticManager.shared.selectionChanged()
+                            onSelect(suggestion.query)
+                        } label: {
+                            HStack(spacing: 0) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(suggestion.title)
+                                        .font(.body.weight(.semibold))
+
+                                    if !suggestion.subtitle.isEmpty {
+                                        Text(suggestion.subtitle)
+                                            .font(.footnote)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                Spacer(minLength: 0)
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("city_search_suggestion_\(suggestion.id)")
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("city_search_suggestion_\(suggestion.id)")
                 }
             }
+            .accessibilityIdentifier("city_search_list")
+            .listStyle(.plain)
         }
-        .accessibilityIdentifier("city_search_list")
-        .listStyle(.plain)
         .navigationTitle(settings.string(.citySelectionTitle))
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(
-            text: Binding(
-                get: { viewModel.query },
-                set: { viewModel.updateQuery($0) }
-            ),
-            placement: .navigationBarDrawer(displayMode: .always),
-            prompt: settings.string(.cityPlaceholder)
-        )
         .textInputAutocapitalization(.words)
         .autocorrectionDisabled(true)
-        .onSubmit(of: .search) {
-            submitManualCity()
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .onAppear {
+            Task { @MainActor in
+                isSearchFocused = true
+            }
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -85,6 +89,43 @@ struct CitySearchView: View {
                 .accessibilityIdentifier("city_search_submit_button")
             }
         }
+    }
+
+    private var searchField: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+
+            TextField(
+                settings.string(.cityPlaceholder),
+                text: Binding(
+                    get: { viewModel.query },
+                    set: { viewModel.updateQuery($0) }
+                )
+            )
+            .focused($isSearchFocused)
+            .submitLabel(.search)
+            .onSubmit {
+                submitManualCity()
+            }
+
+            if !trimmedQuery.isEmpty {
+                Button {
+                    HapticManager.shared.lightImpact()
+                    viewModel.updateQuery("")
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("city_search_clear_button")
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(.horizontal, 12)
+        .padding(.top, 4)
     }
     
     private var trimmedQuery: String {
