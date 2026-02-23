@@ -1,0 +1,12 @@
+# Xcode
+build/
+DerivedData/
+xcuserdata/
+
+# Swift Package Manager (Lottie)
+.build/
+.swiftpm/
+Package.resolved
+
+# macOS
+.DS_Store
