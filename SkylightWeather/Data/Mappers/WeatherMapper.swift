@@ -1,16 +1,16 @@
-//
-//  WeatherMapper.swift
-//  SkylightWeather
-//
+    //
+    //  WeatherMapper.swift
+    //  SkylightWeather
+    //
 
 import Foundation
 
 struct WeatherMapper {
-
+    
     static func map(current: CurrentWeatherDTO, forecast: ForecastDTO) -> WeatherViewData {
         let days = forecast.forecast.forecastday
         let languageCode = L10n.currentLanguageCode()
-
+        
         return WeatherViewData(
             locationName: current.location.name,
             temperature: "\(Int(current.current.temp_c))\u{00B0}",
@@ -26,24 +26,24 @@ struct WeatherMapper {
             daily: buildDaily(days: days, languageCode: languageCode)
         )
     }
-
-    // MARK: - Hourly
-
+    
+        // MARK: - Hourly
+    
     private static func buildHourly(
         days: [ForecastDTO.ForecastDayDTO],
         languageCode: String
     ) -> [HourlyViewData] {
         guard days.count >= 2 else { return [] }
-
+        
         let currentHour = Calendar.current.component(.hour, from: Date())
-
+        
         let todayHours = days[0].hour.filter { hourDTO in
             let hour = extractHour(from: hourDTO.time)
             return hour >= currentHour
         }
-
+        
         let tomorrowHours = days[1].hour
-
+        
         return (todayHours + tomorrowHours).enumerated().map { index, dto in
             let precipChance = max(dto.chance_of_rain ?? 0, dto.chance_of_snow ?? 0)
             return HourlyViewData(
@@ -58,9 +58,9 @@ struct WeatherMapper {
             )
         }
     }
-
-    // MARK: - Daily
-
+    
+        // MARK: - Daily
+    
     private static func buildDaily(
         days: [ForecastDTO.ForecastDayDTO],
         languageCode: String
@@ -76,16 +76,16 @@ struct WeatherMapper {
             )
         }
     }
-
-    // MARK: - Helpers
-
+    
+        // MARK: - Helpers
+    
     private static func extractHour(from timeString: String) -> Int {
         let parts = timeString.split(separator: " ")
         guard parts.count == 2 else { return 0 }
         let timePart = parts[1].split(separator: ":")
         return Int(timePart[0]) ?? 0
     }
-
+    
     private static func formatHourTime(
         _ timeString: String,
         isFirst: Bool,
@@ -98,17 +98,17 @@ struct WeatherMapper {
         guard parts.count == 2 else { return "" }
         return String(parts[1])
     }
-
+    
     private static func formatWeekday(_ dateString: String, languageCode: String) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.locale = Locale(identifier: "en_US_POSIX")
         guard let date = formatter.date(from: dateString) else { return "" }
-
+        
         if Calendar.current.isDateInToday(date) {
             return L10n.text(.today, languageCode: languageCode)
         }
-
+        
         let weekdayFormatter = DateFormatter()
         weekdayFormatter.locale = L10n.locale(for: languageCode)
         weekdayFormatter.dateFormat = "EEE"

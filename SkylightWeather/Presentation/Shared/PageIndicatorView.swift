@@ -1,18 +1,18 @@
-//
-//  PageIndicatorView.swift
-//  SkylightWeather
-//
+    //
+    //  PageIndicatorView.swift
+    //  SkylightWeather
+    //
 
 import SwiftUI
 
 struct PageIndicatorView: View {
     let count: Int
     @Binding var selectedIndex: Int?
-
+    
     private var current: Int {
         min(max(selectedIndex ?? 0, 0), max(count - 1, 0))
     }
-
+    
     var body: some View {
         HStack(spacing: 8) {
             ForEach(0..<count, id: \.self) { index in
@@ -25,10 +25,13 @@ struct PageIndicatorView: View {
         .padding(.vertical, 6)
         .padding(.horizontal, 10)
         .adaptiveGlassBackground(cornerRadius: 20)
+        .accessibilityElement(children: .ignore)
+        .accessibilityIdentifier("weather_page_indicator")
+        .accessibilityValue("\(current + 1)/\(max(count, 1))")
     }
 }
 
-// MARK: - Preview
+    // MARK: - Preview
 
 #Preview {
     @Previewable @State var selected: Int? = 0

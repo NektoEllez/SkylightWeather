@@ -105,6 +105,21 @@ Run tests:
 xcodebuild -project SkylightWeather.xcodeproj -scheme SkylightWeather -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.2' test
 ```
 
+UI tests included:
+
+- `testSettingsSheetOpenAndClose`
+- `testHourlyInnerScrollDoesNotSwitchPagerCard`
+
+Manual scenarios (recommended):
+
+1. Card gesture arbitration
+   Open the app, swipe to the hourly card, then swipe left/right inside the hourly strip.
+   Expected: inner hourly strip scrolls independently and outer page stays on the hourly card.
+2. City search and invalid city handling
+   Open source menu -> `Enter city`, type a valid city and apply.
+   Then enter an invalid city string (for example `Sfgfg`) and confirm.
+   Expected: localized invalid city warning with `OK`; after `OK` app returns to the previous valid source.
+
 ## Permissions
 
 - `NSLocationWhenInUseUsageDescription` is required to fetch weather by current location.

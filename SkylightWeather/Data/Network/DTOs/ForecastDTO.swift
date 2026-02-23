@@ -1,29 +1,29 @@
-//
-//  ForecastDTO.swift
-//  SkylightWeather
-//
+    //
+    //  ForecastDTO.swift
+    //  SkylightWeather
+    //
 
 import Foundation
 
 nonisolated struct ForecastDTO: Decodable, Sendable {
     let forecast: ForecastDaysDTO
-
+    
     nonisolated struct ForecastDaysDTO: Decodable, Sendable {
         let forecastday: [ForecastDayDTO]
     }
-
+    
     nonisolated struct ForecastDayDTO: Decodable, Sendable {
         let date: String
         let day: DayDTO
         let hour: [HourDTO]
     }
-
+    
     nonisolated struct DayDTO: Decodable, Sendable {
         let mintemp_c: Double
         let maxtemp_c: Double
         let condition: CurrentWeatherDTO.ConditionDTO
     }
-
+    
     nonisolated struct HourDTO: Decodable, Sendable {
         let time: String
         let temp_c: Double
@@ -34,7 +34,7 @@ nonisolated struct ForecastDTO: Decodable, Sendable {
         let wind_kph: Double?
         let humidity: Int?
         let precip_mm: Double?
-
+        
         init(
             time: String,
             temp_c: Double,
@@ -56,7 +56,7 @@ nonisolated struct ForecastDTO: Decodable, Sendable {
             self.humidity = humidity
             self.precip_mm = precip_mm
         }
-
+        
         init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             time = try c.decode(String.self, forKey: .time)
@@ -69,7 +69,7 @@ nonisolated struct ForecastDTO: Decodable, Sendable {
             humidity = try c.decodeIfPresent(Int.self, forKey: .humidity)
             precip_mm = try c.decodeIfPresent(Double.self, forKey: .precip_mm)
         }
-
+        
         private enum CodingKeys: String, CodingKey {
             case time, temp_c, is_day, condition
             case chance_of_rain, chance_of_snow, wind_kph, humidity, precip_mm

@@ -11,6 +11,7 @@ struct WeatherDashboardView: View {
     @Environment(\.appSettings) private var settings
     @Environment(\.colorScheme) private var colorScheme
     @State private var selectedCard: Int? = 0
+    @State private var isHourlyScrollInteracting = false
 
     var body: some View {
         ZStack {
@@ -28,6 +29,7 @@ struct WeatherDashboardView: View {
                 .padding(.vertical, 20)
             }
         }
+        .accessibilityIdentifier("weather_dashboard")
     }
 
     private var header: some View {
@@ -49,6 +51,7 @@ struct WeatherDashboardView: View {
             HorizontalPagingScrollView(
                 pageCount: 3,
                 selectedIndex: $selectedCard,
+                scrollEnabled: !isHourlyScrollInteracting,
                 horizontalPadding: 0,
                 cardWidthRatio: 0.86,
                 pinchScale: 0.93,
@@ -56,6 +59,7 @@ struct WeatherDashboardView: View {
             ) { index in
                 card(at: index)
             }
+            .accessibilityIdentifier("weather_cards_pager")
             .frame(height: 468)
         } else {
             VStack(spacing: 12) {
@@ -87,14 +91,22 @@ struct WeatherDashboardView: View {
             weatherCard(title: settings.string(.now)) {
                 CurrentWeatherView(data: data)
             }
+            .accessibilityIdentifier("weather_card_now")
         case 1:
             weatherCard(title: settings.string(.hourlyForecast)) {
-                HourlyForecastView(hours: data.hourly)
+                HourlyForecastView(
+                    hours: data.hourly,
+                    onInteractionChanged: { isInteracting in
+                        isHourlyScrollInteracting = isInteracting
+                    }
+                )
             }
+            .accessibilityIdentifier("weather_card_hourly")
         default:
             weatherCard(title: dailyForecastTitle) {
                 DailyForecastView(days: data.daily)
             }
+            .accessibilityIdentifier("weather_card_daily")
         }
     }
 

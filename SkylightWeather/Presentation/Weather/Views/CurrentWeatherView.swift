@@ -1,19 +1,19 @@
-//
-//  CurrentWeatherView.swift
-//  SkylightWeather
-//
+    //
+    //  CurrentWeatherView.swift
+    //  SkylightWeather
+    //
 
 import SwiftUI
 
 struct CurrentWeatherView: View {
-
+    
     let data: WeatherViewData
-
+    
     var body: some View {
         VStack(spacing: 12) {
             WeatherAnimationView(conditionCode: data.conditionCode, isDay: data.isDay)
                 .frame(width: 72, height: 72)
-
+            
             temperatureLabel
             conditionLabel
             feelsLikeLabel
@@ -21,21 +21,21 @@ struct CurrentWeatherView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .multilineTextAlignment(.center)
     }
-
-    // MARK: - Subviews
-
+    
+        // MARK: - Subviews
+    
     private var temperatureLabel: some View {
         Text(data.temperature)
             .font(.system(size: 72, weight: .thin, design: .rounded))
             .foregroundStyle(.white)
     }
-
+    
     private var conditionLabel: some View {
         Text(data.conditionText)
             .font(.system(.title3, design: .rounded, weight: .semibold))
             .foregroundStyle(.white.opacity(0.95))
     }
-
+    
     private var feelsLikeLabel: some View {
         Text(data.feelsLike)
             .font(.system(.subheadline, design: .rounded, weight: .medium))
@@ -43,7 +43,7 @@ struct CurrentWeatherView: View {
     }
 }
 
-// MARK: - Preview
+    // MARK: - Preview
 
 #Preview {
     let settings = AppSettings.shared

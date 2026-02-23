@@ -1,7 +1,7 @@
-//
-//  GlassStyle.swift
-//  SkylightWeather
-//
+    //
+    //  GlassStyle.swift
+    //  SkylightWeather
+    //
 
 import SwiftUI
 

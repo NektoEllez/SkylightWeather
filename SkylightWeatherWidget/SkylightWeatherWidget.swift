@@ -1,7 +1,7 @@
-//
-//  SkylightWeatherWidget.swift
-//  SkylightWeatherWidget
-//
+    //
+    //  SkylightWeatherWidget.swift
+    //  SkylightWeatherWidget
+    //
 
 import SwiftUI
 import WidgetKit
@@ -22,23 +22,23 @@ private enum WidgetL10n {
         subsystem: Bundle.main.bundleIdentifier ?? "test.SkylightWeather.widget",
         category: "Widget"
     )
-
+    
     static func currentLanguageCode() -> String {
         let defaults = UserDefaults(suiteName: SharedStorageKeys.appGroup) ?? .standard
         return resolveLanguageCode(defaults.string(forKey: SharedStorageKeys.languageCode))
     }
-
+    
     static func text(_ key: WidgetLocalizedKey, languageCode: String) -> String {
         let localized = translations[key]?[resolveLanguageCode(languageCode)] ?? translations[key]?[fallbackLanguage]
         return localized ?? ""
     }
-
+    
     static func format(_ key: WidgetLocalizedKey, languageCode: String, _ args: CVarArg...) -> String {
         let format = text(key, languageCode: languageCode)
         let locale = Locale(identifier: resolveLanguageCode(languageCode))
         return String(format: format, locale: locale, arguments: args)
     }
-
+    
     private static func resolveLanguageCode(_ languageCode: String?) -> String {
         let normalized = languageCode?.lowercased()
         if let normalized, supportedLanguages.contains(normalized) {
@@ -46,7 +46,7 @@ private enum WidgetL10n {
         }
         return fallbackLanguage
     }
-
+    
     private static let translations: [WidgetLocalizedKey: [String: String]] = [
         .placeholderCondition: [
             "en": "Open the app",
@@ -90,7 +90,7 @@ private struct WeatherWidgetEntry: TimelineEntry {
 }
 
 private struct WeatherWidgetProvider: TimelineProvider {
-
+    
     func placeholder(in context: Context) -> WeatherWidgetEntry {
         let languageCode = WidgetL10n.currentLanguageCode()
         return WeatherWidgetEntry(
@@ -99,7 +99,7 @@ private struct WeatherWidgetProvider: TimelineProvider {
             languageCode: languageCode
         )
     }
-
+    
     func getSnapshot(in context: Context, completion: @escaping (WeatherWidgetEntry) -> Void) {
         let languageCode = WidgetL10n.currentLanguageCode()
         completion(
@@ -110,7 +110,7 @@ private struct WeatherWidgetProvider: TimelineProvider {
             )
         )
     }
-
+    
     func getTimeline(in context: Context, completion: @escaping (Timeline<WeatherWidgetEntry>) -> Void) {
         let languageCode = WidgetL10n.currentLanguageCode()
         let entry = WeatherWidgetEntry(
@@ -121,7 +121,7 @@ private struct WeatherWidgetProvider: TimelineProvider {
         let nextUpdate = Date().addingTimeInterval(30 * 60)
         completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
     }
-
+    
     private func loadSnapshot(languageCode: String) -> WeatherWidgetSnapshot {
         let defaults = UserDefaults(suiteName: SharedStorageKeys.appGroup) ?? .standard
         guard let data = defaults.data(forKey: SharedStorageKeys.widgetSnapshot) else {
@@ -139,31 +139,31 @@ private struct WeatherWidgetProvider: TimelineProvider {
 
 private struct WeatherWidgetEntryView: View {
     let entry: WeatherWidgetProvider.Entry
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(entry.snapshot.locationName)
                     .font(.system(.headline, design: .rounded, weight: .semibold))
                     .lineLimit(1)
-
+                
                 Spacer(minLength: 6)
-
+                
                 Image(systemName: conditionSymbolName)
                     .font(.system(size: 16, weight: .semibold))
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.white.opacity(0.95))
             }
-
+            
             Text(entry.snapshot.temperature)
                 .font(.system(size: 36, weight: .thin, design: .rounded))
-
+            
             Text(entry.snapshot.conditionText)
                 .font(.system(.footnote, design: .rounded, weight: .medium))
                 .lineLimit(1)
-
+            
             Spacer(minLength: 0)
-
+            
             Text(updatedAtText)
                 .font(.caption2)
                 .foregroundStyle(.white.opacity(0.75))
@@ -178,7 +178,7 @@ private struct WeatherWidgetEntryView: View {
             )
         }
     }
-
+    
     private var updatedAtText: String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: entry.languageCode)
@@ -187,28 +187,28 @@ private struct WeatherWidgetEntryView: View {
         let time = formatter.string(from: entry.snapshot.updatedAt)
         return WidgetL10n.format(.updatedFormat, languageCode: entry.languageCode, time)
     }
-
+    
     private var conditionSymbolName: String {
         switch entry.snapshot.conditionCode {
-        case 1000:
-            return "sun.max.fill"
-        case 1003, 1006, 1009:
-            return "cloud.fill"
-        case 1063, 1180...1201:
-            return "cloud.rain.fill"
-        case 1066, 1210...1225:
-            return "snowflake"
-        case 1087, 1273...1279:
-            return "cloud.bolt.rain.fill"
-        default:
-            return "cloud.fill"
+            case 1000:
+                return "sun.max.fill"
+            case 1003, 1006, 1009:
+                return "cloud.fill"
+            case 1063, 1180...1201:
+                return "cloud.rain.fill"
+            case 1066, 1210...1225:
+                return "snowflake"
+            case 1087, 1273...1279:
+                return "cloud.bolt.rain.fill"
+            default:
+                return "cloud.fill"
         }
     }
 }
 
 struct SkylightWeatherWidget: Widget {
     let kind: String = "SkylightWeatherWidget"
-
+    
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: WeatherWidgetProvider()) { entry in
             WeatherWidgetEntryView(entry: entry)

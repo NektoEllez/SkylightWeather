@@ -9,6 +9,7 @@ import SwiftUI
 struct HorizontalPagingScrollView<Content: View>: View {
     let pageCount: Int
     @Binding var selectedIndex: Int?
+    var scrollEnabled: Bool = true
     var horizontalPadding: CGFloat = 0
     var cardWidthRatio: CGFloat = 1.0
     var pinchScale: CGFloat = 0.92
@@ -34,6 +35,7 @@ struct HorizontalPagingScrollView<Content: View>: View {
                 .background(Color.clear)
             }
             .scrollPosition(id: $selectedIndex)
+            .scrollDisabled(!scrollEnabled)
             .scrollTargetBehavior(.viewAligned)
             .scrollIndicators(.hidden)
             .background(Color.clear)

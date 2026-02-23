@@ -1,7 +1,7 @@
-//
-//  SharedStorageKeys.swift
-//  SkylightWeatherShared
-//
+    //
+    //  SharedStorageKeys.swift
+    //  SkylightWeatherShared
+    //
 
 import Foundation
 

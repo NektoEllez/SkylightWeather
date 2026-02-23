@@ -8,10 +8,12 @@ import SwiftUI
 struct HourlyForecastView: View {
 
     let hours: [HourlyViewData]
+    var onInteractionChanged: ((Bool) -> Void)?
     private let slotWidth: CGFloat = 68
     private let edgeScale: CGFloat = 0.72
     private let centerInfluenceFactor: CGFloat = 0.45
     private var visibleHours: [HourlyViewData] { Array(hours.prefix(24)) }
+    @State private var isInteracting = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -50,9 +52,22 @@ struct HourlyForecastView: View {
                 }
                 .scrollTargetLayout()
             }
+            .accessibilityIdentifier("hourly_inner_scroll")
             .scrollTargetBehavior(.viewAligned)
             .coordinateSpace(name: "hourly-scroll")
             .background(Color.clear)
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 3)
+                    .onChanged { _ in
+                        setInteractionState(true)
+                    }
+                    .onEnded { _ in
+                        setInteractionState(false)
+                    }
+            )
+            .onDisappear {
+                setInteractionState(false)
+            }
         }
     }
 
@@ -124,6 +139,12 @@ struct HourlyForecastView: View {
         }
         .frame(maxHeight: .infinity)
         .padding(.vertical, 16)
+    }
+
+    private func setInteractionState(_ value: Bool) {
+        guard isInteracting != value else { return }
+        isInteracting = value
+        onInteractionChanged?(value)
     }
 }
 

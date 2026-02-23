@@ -1,7 +1,7 @@
-//
-//  SettingsView.swift
-//  SkylightWeather
-//
+    //
+    //  SettingsView.swift
+    //  SkylightWeather
+    //
 
 import SwiftUI
 
@@ -10,21 +10,22 @@ struct SettingsView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.onSheetColorSchemeChange) private var onSheetColorSchemeChange
     private let onDone: () -> Void
-
+    
     init(onDone: @escaping () -> Void = {}) {
         self.onDone = onDone
     }
-
+    
     private var sheetMaterial: Material {
         colorScheme == .dark ? .regularMaterial : .ultraThinMaterial
     }
-
+    
     var body: some View {
         Form {
             appearanceSection
             languageSection
             widgetSection
         }
+        .accessibilityIdentifier("settings_form")
         .scrollContentBackground(.hidden)
         .background(sheetMaterial)
         .navigationTitle(settings.string(.settings))
@@ -35,13 +36,14 @@ struct SettingsView: View {
                     HapticManager.shared.lightImpact()
                     onDone()
                 }
+                .accessibilityIdentifier("settings_done_button")
             }
         }
         .onChange(of: settings.colorScheme) { _, _ in
             onSheetColorSchemeChange?()
         }
     }
-
+    
     private var appearanceSection: some View {
         Section {
             Picker(
@@ -49,23 +51,23 @@ struct SettingsView: View {
                 selection: Binding(
                     get: {
                         switch settings.colorScheme {
-                        case .light:
-                            return "light"
-                        case .dark:
-                            return "dark"
-                        default:
-                            return "system"
+                            case .light:
+                                return "light"
+                            case .dark:
+                                return "dark"
+                            default:
+                                return "system"
                         }
                     },
                     set: { selection in
                         HapticManager.shared.selectionChanged()
                         switch selection {
-                        case "light":
-                            settings.colorScheme = .light
-                        case "dark":
-                            settings.colorScheme = .dark
-                        default:
-                            settings.colorScheme = nil
+                            case "light":
+                                settings.colorScheme = .light
+                            case "dark":
+                                settings.colorScheme = .dark
+                            default:
+                                settings.colorScheme = nil
                         }
                     }
                 )
@@ -74,6 +76,7 @@ struct SettingsView: View {
                 Text(settings.string(.light)).tag("light")
                 Text(settings.string(.dark)).tag("dark")
             }
+            .accessibilityIdentifier("settings_appearance_picker")
             .pickerStyle(.segmented)
         } header: {
             Text(settings.string(.appearance))
@@ -81,7 +84,7 @@ struct SettingsView: View {
             Text(settings.string(.chooseColorScheme))
         }
     }
-
+    
     private var languageSection: some View {
         Section {
             Picker(
@@ -98,6 +101,7 @@ struct SettingsView: View {
                     Text(settings.string(language.key)).tag(language.code)
                 }
             }
+            .accessibilityIdentifier("settings_language_picker")
             .pickerStyle(.menu)
         } header: {
             Text(settings.string(.language))
@@ -105,7 +109,7 @@ struct SettingsView: View {
             Text(settings.string(.selectLanguage))
         }
     }
-
+    
     private var widgetSection: some View {
         Section {
             Toggle(settings.string(.widgetHintToggle), isOn: Binding(
@@ -115,6 +119,7 @@ struct SettingsView: View {
                     settings.showWidgetHint = $0
                 }
             ))
+            .accessibilityIdentifier("settings_widget_hint_toggle")
             if settings.showWidgetHint {
                 Text(settings.string(.widgetAddInstructions))
                     .font(.footnote)

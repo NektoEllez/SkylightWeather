@@ -1,14 +1,14 @@
-//
-//  AdaptiveNavigationController.swift
-//  SkylightWeather
-//
+    //
+    //  AdaptiveNavigationController.swift
+    //  SkylightWeather
+    //
 
 import UIKit
 
-/// Navigation controller that reapplies bar appearance when trait collection changes,
-/// ensuring title and tint colors stay visible in both light and dark modes.
+    /// Navigation controller that reapplies bar appearance when trait collection changes,
+    /// ensuring title and tint colors stay visible in both light and dark modes.
 final class AdaptiveNavigationController: UINavigationController {
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         applyBarAppearance()
@@ -16,7 +16,7 @@ final class AdaptiveNavigationController: UINavigationController {
             self.applyBarAppearance()
         }
     }
-
+    
     private func applyBarAppearance() {
         let appearance = UINavigationBarAppearance()
         appearance.configureWithDefaultBackground()

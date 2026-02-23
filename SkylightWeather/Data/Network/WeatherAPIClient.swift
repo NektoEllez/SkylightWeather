@@ -1,7 +1,7 @@
-//
-//  WeatherAPIClient.swift
-//  SkylightWeather
-//
+    //
+    //  WeatherAPIClient.swift
+    //  SkylightWeather
+    //
 
 import Foundation
 import os
@@ -13,21 +13,21 @@ enum APIError: LocalizedError {
     case server(Int)
     case decoding(Error)
     case unknown
-
+    
     var errorDescription: String? {
         switch self {
-        case .invalidURL:
-            return L10n.text(.errorInvalidURL)
-        case .cityNotFound:
-            return L10n.text(.errorCityNotFound)
-        case .network:
-            return L10n.text(.errorNoInternet)
-        case .server(let code):
-            return L10n.format(.errorServerFormat, languageCode: nil, code)
-        case .decoding:
-            return L10n.text(.errorDecoding)
-        case .unknown:
-            return L10n.text(.errorUnknown)
+            case .invalidURL:
+                return L10n.text(.errorInvalidURL)
+            case .cityNotFound:
+                return L10n.text(.errorCityNotFound)
+            case .network:
+                return L10n.text(.errorNoInternet)
+            case .server(let code):
+                return L10n.format(.errorServerFormat, languageCode: nil, code)
+            case .decoding:
+                return L10n.text(.errorDecoding)
+            case .unknown:
+                return L10n.text(.errorUnknown)
         }
     }
 }
@@ -37,14 +37,14 @@ protocol WeatherAPIClientProtocol: Sendable {
     func fetchForecast(query: String, days: Int, languageCode: String) async throws -> ForecastDTO
 }
 
-/// Network client for WeatherAPI.com.
-/// All methods are `nonisolated` — fetch + JSON decoding run on the cooperative
-/// thread pool, keeping MainActor free for UI work.
+    /// Network client for WeatherAPI.com.
+    /// All methods are `nonisolated` — fetch + JSON decoding run on the cooperative
+    /// thread pool, keeping MainActor free for UI work.
 final class WeatherAPIClient: WeatherAPIClientProtocol, @unchecked Sendable {
-
+    
     private let session: URLSession
     nonisolated private static let cityNotFoundCodes: Set<Int> = [1003, 1006]
-
+    
     nonisolated init(session: URLSession? = nil) {
         if let session {
             self.session = session
@@ -60,7 +60,7 @@ final class WeatherAPIClient: WeatherAPIClientProtocol, @unchecked Sendable {
             self.session = URLSession(configuration: configuration)
         }
     }
-
+    
     nonisolated func fetchCurrent(query: String, languageCode: String) async throws -> CurrentWeatherDTO {
         guard let url = Endpoint.current(query: query, languageCode: languageCode).url else {
             throw APIError.invalidURL
@@ -68,7 +68,7 @@ final class WeatherAPIClient: WeatherAPIClientProtocol, @unchecked Sendable {
         AppLog.network.debug("Requesting current weather")
         return try await fetch(url: url)
     }
-
+    
     nonisolated func fetchForecast(query: String, days: Int, languageCode: String) async throws -> ForecastDTO {
         guard let url = Endpoint.forecast(query: query, days: days, languageCode: languageCode).url else {
             throw APIError.invalidURL
@@ -76,14 +76,14 @@ final class WeatherAPIClient: WeatherAPIClientProtocol, @unchecked Sendable {
         AppLog.network.debug("Requesting weather forecast")
         return try await fetch(url: url)
     }
-
-    // MARK: - Private
-
+    
+        // MARK: - Private
+    
     nonisolated private func fetch<T: Decodable>(url: URL) async throws -> T {
         do {
             let (data, response) = try await session.data(from: url)
             try Task.checkCancellation()
-
+            
             guard let http = response as? HTTPURLResponse else {
                 throw APIError.unknown
             }
@@ -96,7 +96,7 @@ final class WeatherAPIClient: WeatherAPIClientProtocol, @unchecked Sendable {
                 }
                 throw APIError.server(http.statusCode)
             }
-
+            
             do {
                 return try JSONDecoder().decode(T.self, from: data)
             } catch {
@@ -115,7 +115,7 @@ final class WeatherAPIClient: WeatherAPIClientProtocol, @unchecked Sendable {
             throw APIError.unknown
         }
     }
-
+    
     nonisolated private func decodeServerError(from data: Data) -> APIErrorPayload? {
         do {
             return try JSONDecoder().decode(APIErrorEnvelope.self, from: data).error

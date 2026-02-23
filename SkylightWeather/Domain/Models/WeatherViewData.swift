@@ -1,7 +1,7 @@
-//
-//  WeatherViewData.swift
-//  SkylightWeather
-//
+    //
+    //  WeatherViewData.swift
+    //  SkylightWeather
+    //
 
 import Foundation
 

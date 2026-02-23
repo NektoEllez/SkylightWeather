@@ -1,7 +1,7 @@
-//
-//  AppCoordinator.swift
-//  SkylightWeather
-//
+    //
+    //  AppCoordinator.swift
+    //  SkylightWeather
+    //
 
 import SwiftUI
 import UIKit
@@ -9,25 +9,25 @@ import os
 
 @MainActor
 final class AppCoordinator: NSObject {
-
+    
     private let window: UIWindow
     private let navigationController = AdaptiveNavigationController()
     private let logger = AppLog.ui
     private weak var presentedSettingsController: UIViewController?
-
+    
     init(window: UIWindow) {
         self.window = window
     }
-
+    
     func start() {
         let weatherViewController = WeatherViewController()
         weatherViewController.coordinator = self
-
+        
         navigationController.setViewControllers([weatherViewController], animated: false)
         window.rootViewController = navigationController
         window.makeKeyAndVisible()
     }
-
+    
     private func makeSettingsController(appSettings: AppSettings) -> UIViewController {
         let onColorSchemeChange = { [weak self] in
             guard let self else { return }
@@ -37,9 +37,9 @@ final class AppCoordinator: NSObject {
             self?.logger.debug("Closing settings screen")
             self?.presentedSettingsController?.dismiss(animated: true)
         })
-        .environment(\.appSettings, appSettings)
-        .environment(\.onSheetColorSchemeChange, onColorSchemeChange)
-
+            .environment(\.appSettings, appSettings)
+            .environment(\.onSheetColorSchemeChange, onColorSchemeChange)
+        
         let hosting = UIHostingController(rootView: settingsView)
         hosting.view.backgroundColor = .clear
         let navigation = UINavigationController(rootViewController: hosting)
@@ -54,7 +54,7 @@ final class AppCoordinator: NSObject {
         }
         return navigation
     }
-
+    
     private func configureTransparentNavigationBar(_ bar: UINavigationBar) {
         let appearance = UINavigationBarAppearance()
         appearance.configureWithTransparentBackground()
@@ -62,7 +62,7 @@ final class AppCoordinator: NSObject {
         bar.scrollEdgeAppearance = appearance
         bar.compactAppearance = appearance
     }
-
+    
 }
 
 extension AppCoordinator: WeatherViewControllerCoordinating {

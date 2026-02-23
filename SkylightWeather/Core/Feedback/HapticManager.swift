@@ -1,24 +1,24 @@
-//
-//  HapticManager.swift
-//  SkylightWeather
-//
+    //
+    //  HapticManager.swift
+    //  SkylightWeather
+    //
 
 import UIKit
 
 @MainActor
 final class HapticManager {
     static let shared = HapticManager()
-
+    
     private init() {}
-
+    
     private var isHapticFeedbackAvailable: Bool {
-        #if targetEnvironment(simulator)
+#if targetEnvironment(simulator)
         return false
-        #else
+#else
         return UIDevice.current.userInterfaceIdiom == .phone
-        #endif
+#endif
     }
-
+    
     nonisolated func lightImpact() {
         Task { @MainActor in
             guard isHapticFeedbackAvailable else { return }
@@ -27,7 +27,7 @@ final class HapticManager {
             generator.impactOccurred()
         }
     }
-
+    
     nonisolated func mediumImpact() {
         Task { @MainActor in
             guard isHapticFeedbackAvailable else { return }
@@ -36,7 +36,7 @@ final class HapticManager {
             generator.impactOccurred()
         }
     }
-
+    
     nonisolated func selectionChanged() {
         Task { @MainActor in
             guard isHapticFeedbackAvailable else { return }
@@ -45,7 +45,7 @@ final class HapticManager {
             generator.selectionChanged()
         }
     }
-
+    
     nonisolated func success() {
         Task { @MainActor in
             guard isHapticFeedbackAvailable else { return }
@@ -54,7 +54,7 @@ final class HapticManager {
             generator.notificationOccurred(.success)
         }
     }
-
+    
     nonisolated func warning() {
         Task { @MainActor in
             guard isHapticFeedbackAvailable else { return }
@@ -63,7 +63,7 @@ final class HapticManager {
             generator.notificationOccurred(.warning)
         }
     }
-
+    
     nonisolated func error() {
         Task { @MainActor in
             guard isHapticFeedbackAvailable else { return }

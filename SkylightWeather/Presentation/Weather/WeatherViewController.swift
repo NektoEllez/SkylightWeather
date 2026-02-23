@@ -7,7 +7,6 @@ import UIKit
 import SwiftUI
 import Observation
 
-
 final class WeatherViewController: UIViewController {
 
     weak var coordinator: (any WeatherViewControllerCoordinating)?
@@ -19,6 +18,38 @@ final class WeatherViewController: UIViewController {
     private let loadingView = UIActivityIndicatorView(style: .large)
     private var hostingController: UIHostingController<WeatherHostedContent>?
     private var lastObservedLanguageCode: String?
+    private var lastNavigationSourceTitle: String?
+
+    private lazy var refreshBarButtonItem: UIBarButtonItem = {
+        let item = UIBarButtonItem(
+            image: UIImage(systemName: "arrow.clockwise"),
+            style: .plain,
+            target: self,
+            action: #selector(refreshTapped)
+        )
+        item.accessibilityIdentifier = "nav_refresh_button"
+        return item
+    }()
+
+    private lazy var sourceBarButtonItem: UIBarButtonItem = {
+        let item = UIBarButtonItem(
+            image: UIImage(systemName: "location.magnifyingglass"),
+            menu: sourceMenu()
+        )
+        item.accessibilityIdentifier = "nav_source_button"
+        return item
+    }()
+
+    private lazy var settingsBarButtonItem: UIBarButtonItem = {
+        let item = UIBarButtonItem(
+            image: UIImage(systemName: "gearshape"),
+            style: .plain,
+            target: self,
+            action: #selector(settingsTapped)
+        )
+        item.accessibilityIdentifier = "nav_settings_button"
+        return item
+    }()
 
     private var quickCities: [String] {
         [
@@ -77,30 +108,12 @@ final class WeatherViewController: UIViewController {
     }
 
     private func setupNavigationItems() {
-        title = appSettings.string(.appTitle)
-
-        let refreshItem = UIBarButtonItem(
-            image: UIImage(systemName: "arrow.clockwise"),
-            style: .plain,
-            target: self,
-            action: #selector(refreshTapped)
-        )
-
-        let sourceItem = UIBarButtonItem(
-            image: UIImage(systemName: "location.magnifyingglass"),
-            menu: sourceMenu()
-        )
-
-        let settingsItem = UIBarButtonItem(
-            image: UIImage(systemName: "gearshape"),
-            style: .plain,
-            target: self,
-            action: #selector(settingsTapped)
-        )
-
-        navigationItem.leftBarButtonItem = settingsItem
-        navigationItem.rightBarButtonItems = [sourceItem, refreshItem]
-        updateSourcePrompt()
+        lastNavigationSourceTitle = viewModel.displaySourceTitle(languageCode: appSettings.languageCode)
+        sourceBarButtonItem.menu = sourceMenu()
+        navigationItem.leftBarButtonItem = settingsBarButtonItem
+        navigationItem.rightBarButtonItems = [sourceBarButtonItem, refreshBarButtonItem]
+        navigationItem.prompt = nil
+        updateNavigationTitleView()
     }
 
     // MARK: - Observation
@@ -115,14 +128,23 @@ final class WeatherViewController: UIViewController {
             guard let self else { return }
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                let previousLanguageCode = self.lastObservedLanguageCode
                 let currentLang = self.appSettings.languageCode
-                if self.lastObservedLanguageCode != currentLang {
+                let languageChanged = previousLanguageCode != currentLang
+                if languageChanged {
                     self.lastObservedLanguageCode = currentLang
                     self.viewModel.loadWeather()
                 }
+
+                let sourceTitle = self.viewModel.displaySourceTitle(languageCode: currentLang)
+                let sourceChanged = self.lastNavigationSourceTitle != sourceTitle
+                if languageChanged || sourceChanged {
+                    self.lastNavigationSourceTitle = sourceTitle
+                    self.setupNavigationItems()
+                }
+
                 self.applyAppearance()
                 self.render()
-                self.setupNavigationItems()
                 self.observeViewModel()
             }
         }
@@ -214,12 +236,39 @@ final class WeatherViewController: UIViewController {
         present(navigation, animated: true)
     }
 
-    private func updateSourcePrompt() {
-        navigationItem.prompt = L10n.format(
+    private func updateNavigationTitleView() {
+        let sourceText = L10n.format(
             .sourcePrefixFormat,
             languageCode: appSettings.languageCode,
             viewModel.displaySourceTitle(languageCode: appSettings.languageCode)
         )
+
+        let sourceLabel = UILabel()
+        sourceLabel.text = sourceText
+        sourceLabel.font = .systemFont(ofSize: 14, weight: .regular)
+        sourceLabel.textColor = .secondaryLabel
+        sourceLabel.textAlignment = .center
+        sourceLabel.numberOfLines = 1
+        sourceLabel.lineBreakMode = .byTruncatingTail
+        sourceLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+        let titleLabel = UILabel()
+        titleLabel.text = appSettings.string(.appTitle)
+        titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
+        titleLabel.textColor = .label
+        titleLabel.textAlignment = .center
+        titleLabel.numberOfLines = 1
+        titleLabel.lineBreakMode = .byTruncatingTail
+
+        let stack = UIStackView(arrangedSubviews: [sourceLabel, titleLabel])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 2
+        stack.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        stack.accessibilityIdentifier = "nav_title_stack"
+        sourceLabel.accessibilityIdentifier = "nav_source_label"
+        titleLabel.accessibilityIdentifier = "nav_app_title_label"
+        navigationItem.titleView = stack
     }
 
     private func applyAppearance() {

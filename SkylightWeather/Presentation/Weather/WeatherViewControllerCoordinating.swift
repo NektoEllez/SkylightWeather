@@ -1,7 +1,7 @@
-//
-//  WeatherViewControllerCoordinating.swift
-//  SkylightWeather
-//
+    //
+    //  WeatherViewControllerCoordinating.swift
+    //  SkylightWeather
+    //
 
 import UIKit
 

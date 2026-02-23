@@ -1,7 +1,7 @@
-//
-//  AppRuntimeConfiguration.swift
-//  SkylightWeather
-//
+    //
+    //  AppRuntimeConfiguration.swift
+    //  SkylightWeather
+    //
 
 import Foundation
 import os
@@ -9,13 +9,13 @@ import os
 enum AppEnvironment: String, Sendable {
     case dev
     case prod
-
+    
     nonisolated init(rawValueOrFallback value: String?) {
         switch value?.lowercased() {
-        case Self.prod.rawValue:
-            self = .prod
-        default:
-            self = .dev
+            case Self.prod.rawValue:
+                self = .prod
+            default:
+                self = .dev
         }
     }
 }
@@ -25,20 +25,20 @@ struct AppRuntimeConfiguration: Sendable {
     let weatherAPIScheme: String
     let weatherAPIHost: String
     let weatherAPIKey: String
-
+    
     nonisolated static let shared = load()
-
+    
     nonisolated private static func load(bundle: Bundle = .main) -> AppRuntimeConfiguration {
         let environment = AppEnvironment(rawValueOrFallback: bundle.string(forInfoDictionaryKey: InfoKey.environment))
-
+        
         let scheme = bundle.string(forInfoDictionaryKey: InfoKey.weatherAPIScheme)?.trimmingCharacters(in: .whitespacesAndNewlines)
         let host = bundle.string(forInfoDictionaryKey: InfoKey.weatherAPIHost)?.trimmingCharacters(in: .whitespacesAndNewlines)
         let key = bundle.string(forInfoDictionaryKey: InfoKey.weatherAPIKey)?.trimmingCharacters(in: .whitespacesAndNewlines)
-
+        
         let resolvedScheme = scheme?.isEmpty == false ? (scheme ?? Defaults.weatherAPIScheme) : Defaults.weatherAPIScheme
         let resolvedHost = host?.isEmpty == false ? (host ?? Defaults.weatherAPIHost) : Defaults.weatherAPIHost
         let resolvedKey = key?.isEmpty == false ? (key ?? Defaults.weatherAPIKey) : Defaults.weatherAPIKey
-
+        
         if resolvedScheme == Defaults.weatherAPIScheme,
            resolvedHost == Defaults.weatherAPIHost,
            resolvedKey == Defaults.weatherAPIKey {
@@ -47,7 +47,7 @@ struct AppRuntimeConfiguration: Sendable {
         if resolvedKey.isEmpty {
             AppLog.network.error("WEATHER_API_KEY is empty for current environment")
         }
-
+        
         return AppRuntimeConfiguration(
             environment: environment,
             weatherAPIScheme: resolvedScheme,

@@ -1,7 +1,7 @@
-//
-//  AppLocalizedString.swift
-//  SkylightWeather
-//
+    //
+    //  AppLocalizedString.swift
+    //  SkylightWeather
+    //
 
 import Foundation
 
@@ -57,7 +57,7 @@ enum AppLocalizedString: Hashable {
     case quickCityKazan
     case quickCityNovosibirsk
     case quickCitySochi
-
+    
     func localized(for languageCode: String) -> String {
         let translations: [AppLocalizedString: [String: String]] = [
             .appTitle: [
@@ -265,7 +265,7 @@ enum AppLocalizedString: Hashable {
                 "ru": "Сочи"
             ]
         ]
-
+        
         let resolvedLanguage = L10n.resolveLanguageCode(languageCode)
         return translations[self]?[resolvedLanguage] ?? translations[self]?[L10n.fallbackLanguageCode] ?? ""
     }
@@ -274,11 +274,11 @@ enum AppLocalizedString: Hashable {
 enum L10n {
     static let fallbackLanguageCode = "en"
     static let supportedLanguageCodes: Set<String> = ["en", "ru"]
-
+    
     static func text(_ key: AppLocalizedString, languageCode: String? = nil) -> String {
         key.localized(for: resolveLanguageCode(languageCode ?? currentLanguageCode()))
     }
-
+    
     static func format(
         _ key: AppLocalizedString,
         languageCode: String? = nil,
@@ -288,28 +288,28 @@ enum L10n {
         let format = key.localized(for: code)
         return String(format: format, locale: locale(for: code), arguments: arguments)
     }
-
+    
     static func currentLanguageCode() -> String {
         let defaults = UserDefaults(suiteName: SharedStorageKeys.appGroup) ?? .standard
         let storedCode = defaults.string(forKey: SharedStorageKeys.languageCode)
         return resolveLanguageCode(storedCode)
     }
-
+    
     static func locale(for languageCode: String? = nil) -> Locale {
         Locale(identifier: resolveLanguageCode(languageCode ?? currentLanguageCode()))
     }
-
+    
     static func resolveLanguageCode(_ languageCode: String?) -> String {
         let normalized = languageCode?.lowercased()
         if let normalized, supportedLanguageCodes.contains(normalized) {
             return normalized
         }
-
+        
         if let preferred = Locale.preferredLanguages.first?.prefix(2).lowercased(),
            supportedLanguageCodes.contains(preferred) {
             return preferred
         }
-
+        
         return fallbackLanguageCode
     }
 }

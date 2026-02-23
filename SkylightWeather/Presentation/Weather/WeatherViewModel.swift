@@ -1,7 +1,7 @@
-//
-//  WeatherViewModel.swift
-//  SkylightWeather
-//
+    //
+    //  WeatherViewModel.swift
+    //  SkylightWeather
+    //
 
 import Foundation
 import Observation
@@ -20,17 +20,17 @@ enum ViewState: Sendable {
 @MainActor
 @Observable
 final class WeatherViewModel {
-
+    
     var state: ViewState = .loading
     var source: WeatherRequestSource
     var lastUpdatedAt: Date?
-
+    
     private let useCase: GetWeatherUseCase
     private let preferencesStore: WeatherPreferencesStore
     private let logger = AppLog.viewModel
     private var loadTask: Task<Void, Never>?
     private var rollbackSourceAfterInvalidCity: WeatherRequestSource?
-
+    
     init(useCase: GetWeatherUseCase, preferencesStore: WeatherPreferencesStore) {
         self.useCase = useCase
         self.preferencesStore = preferencesStore
@@ -40,18 +40,18 @@ final class WeatherViewModel {
             self.source = .currentLocation
         }
     }
-
+    
     convenience init() {
         self.init(
             useCase: GetWeatherUseCase(),
             preferencesStore: WeatherPreferencesStore()
         )
     }
-
+    
     func loadWeather() {
         load(source: source)
     }
-
+    
     func useCurrentLocation() {
         logger.info("Using current location as weather source")
         rollbackSourceAfterInvalidCity = nil
@@ -59,7 +59,7 @@ final class WeatherViewModel {
         preferencesStore.saveSelectedCity(nil)
         load(source: source)
     }
-
+    
     func useCity(_ city: String) {
         let trimmed = city.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
@@ -68,16 +68,16 @@ final class WeatherViewModel {
         source = .city(trimmed)
         load(source: source)
     }
-
+    
     func displaySourceTitle(languageCode: String) -> String {
         source.displayTitle(languageCode: languageCode)
     }
-
+    
     private func load(source: WeatherRequestSource) {
         logger.debug("Starting weather load")
         loadTask?.cancel()
         state = .loading
-
+        
         loadTask = Task { [weak self] in
             guard let self else { return }
             do {
@@ -89,9 +89,9 @@ final class WeatherViewModel {
                 self.rollbackSourceAfterInvalidCity = nil
                 self.lastUpdatedAt = Date()
                 self.preferencesStore.saveWidgetSnapshot(from: data)
-                #if canImport(WidgetKit)
+#if canImport(WidgetKit)
                 WidgetCenter.shared.reloadAllTimelines()
-                #endif
+#endif
             } catch is CancellationError {
                 self.logger.debug("Weather load cancelled")
                 return
@@ -107,7 +107,7 @@ final class WeatherViewModel {
             }
         }
     }
-
+    
     func acknowledgeInvalidCityWarning() {
         guard case .cityNotFound = state else { return }
         let fallbackSource = rollbackSourceAfterInvalidCity ?? .currentLocation
@@ -116,19 +116,19 @@ final class WeatherViewModel {
         source = fallbackSource
         load(source: fallbackSource)
     }
-
+    
     func cancelLoading() {
         logger.debug("Cancelling in-flight weather load")
         loadTask?.cancel()
         loadTask = nil
     }
-
+    
     private func persist(source: WeatherRequestSource) {
         switch source {
-        case .currentLocation:
-            preferencesStore.saveSelectedCity(nil)
-        case .city(let city):
-            preferencesStore.saveSelectedCity(city)
+            case .currentLocation:
+                preferencesStore.saveSelectedCity(nil)
+            case .city(let city):
+                preferencesStore.saveSelectedCity(city)
         }
     }
 }
