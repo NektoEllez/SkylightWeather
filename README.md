@@ -2,6 +2,12 @@
 
 iOS weather app (UIKit + SwiftUI) implemented fully programmatically (no Storyboards).
 
+**GitHub repo description** (paste in Settings → General → Description):
+
+```
+iOS weather app (Swift 6+, iOS 17+): UIKit + SwiftUI, async/await, @Observable, WidgetKit. Uses WeatherAPI. MVVM, programmatic UI.
+```
+
 ## Screenshots
 
 | Light | Dark |
