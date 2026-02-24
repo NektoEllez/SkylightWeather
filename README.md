@@ -77,6 +77,16 @@ Where to configure:
 2. Go to `Build Settings`
 3. Set `WEATHER_API_*` for `Debug` / `Release`
 
+Local secrets setup (recommended):
+
+1. `Secrets.xcconfig.example` is committed and used as base config (safe default: empty key).
+2. `Secrets.xcconfig` is local-only (gitignored) and contains your real `WEATHER_API_KEY`.
+3. If `Secrets.xcconfig` exists, its values override the example file via optional include.
+
+Security note:
+- API keys in mobile clients are extractable.
+- Production-grade security requires storing third-party credentials encrypted on backend/proxy and calling backend from the app.
+
 ## Build & Run
 
 ```bash

@@ -8,6 +8,7 @@ import SwiftUI
 struct WeatherHostedContent: View {
     
     let state: ViewState
+    let lastContent: WeatherViewData?
     let onRetry: () -> Void
     let onAcknowledgeInvalidCity: () -> Void
     let appSettings: AppSettings
@@ -16,14 +17,19 @@ struct WeatherHostedContent: View {
         Group {
             switch state {
                 case .loading:
-                    EmptyView()
+                    if let lastContent {
+                        WeatherDashboardView(data: lastContent)
+                    } else {
+                        Color(.systemBackground)
+                            .ignoresSafeArea()
+                    }
                 case .content(let data):
                     WeatherDashboardView(data: data)
                 case .error(let message):
                     ErrorView(
                         message: message,
                         actionTitle: appSettings.string(.retry),
-                        iconName: "cloud.slash",
+                        iconName: "wifi.exclamationmark",
                         onAction: onRetry
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -49,6 +55,7 @@ struct WeatherHostedContent: View {
 #Preview("Content") {
     WeatherHostedContent(
         state: .content(PreviewWeatherData.sample),
+        lastContent: nil,
         onRetry: {},
         onAcknowledgeInvalidCity: {},
         appSettings: AppSettings.shared
@@ -58,6 +65,7 @@ struct WeatherHostedContent: View {
 #Preview("Error") {
     WeatherHostedContent(
         state: .error(AppSettings.shared.string(.errorNoInternet)),
+        lastContent: PreviewWeatherData.sample,
         onRetry: {},
         onAcknowledgeInvalidCity: {},
         appSettings: AppSettings.shared

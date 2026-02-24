@@ -10,6 +10,19 @@ struct WeatherMapper {
     private static let logger = AppLog.mapper
     private static let placeholder = "\u{2014}"
     
+    private static let parseDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+    
+    private static let weekdayDisplayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+        return formatter
+    }()
+    
     static func map(current: CurrentWeatherDTO, forecast: ForecastDTO) -> WeatherViewData {
         let days = forecast.forecast.forecastday
         let languageCode = L10n.currentLanguageCode()
@@ -131,10 +144,7 @@ struct WeatherMapper {
     }
     
     private static func formatWeekday(_ dateString: String, languageCode: String) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        guard let date = formatter.date(from: dateString) else {
+        guard let date = parseDateFormatter.date(from: dateString) else {
             logger.error("Invalid date format in forecast: \(dateString, privacy: .public)")
             return placeholder
         }
@@ -143,10 +153,8 @@ struct WeatherMapper {
             return L10n.text(.today, languageCode: languageCode)
         }
         
-        let weekdayFormatter = DateFormatter()
-        weekdayFormatter.locale = L10n.locale(for: languageCode)
-        weekdayFormatter.dateFormat = "EEE"
-        return weekdayFormatter.string(from: date).capitalized
+        weekdayDisplayFormatter.locale = L10n.locale(for: languageCode)
+        return weekdayDisplayFormatter.string(from: date).capitalized
     }
 
     private static func extractTimePart(from timeString: String) -> String? {

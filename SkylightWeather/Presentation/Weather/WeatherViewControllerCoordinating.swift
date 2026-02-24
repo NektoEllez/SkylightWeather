@@ -8,5 +8,5 @@ import UIKit
 @MainActor
 protocol WeatherViewControllerCoordinating: AnyObject {
     func showSettings(from presenter: UIViewController, appSettings: AppSettings)
+    func setGlobalLoadingVisible(_ isVisible: Bool)
 }
-

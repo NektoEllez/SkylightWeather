@@ -24,6 +24,7 @@ final class WeatherViewModel {
     var state: ViewState = .loading
     var source: WeatherRequestSource
     var lastUpdatedAt: Date?
+    private(set) var lastSuccessfulData: WeatherViewData?
     
     private let useCase: GetWeatherUseCase
     private let preferencesStore: WeatherPreferencesStore
@@ -83,6 +84,7 @@ final class WeatherViewModel {
                 let data = try await self.useCase.execute(source: source)
                 guard !Task.isCancelled else { return }
                 self.logger.info("Weather load succeeded")
+                self.lastSuccessfulData = data
                 self.state = .content(data)
                 self.persist(source: source)
                 self.rollbackSourceAfterInvalidCity = nil

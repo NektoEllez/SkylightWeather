@@ -20,7 +20,7 @@ final class LocationService {
     private var isRequestInFlight = false
     private var isAwaitingAuthorization = false
     private var timeoutTask: Task<Void, Never>?
-    private let requestTimeoutNanoseconds: UInt64 = 12_000_000_000
+    private let requestTimeout: Duration = .seconds(12)
     
     func requestLocation() async -> CLLocationCoordinate2D {
         let status = manager.authorizationStatus
@@ -94,15 +94,13 @@ final class LocationService {
         timeoutTask = Task { [weak self] in
             guard let self else { return }
             do {
-                try await Task.sleep(nanoseconds: self.requestTimeoutNanoseconds)
+                try await Task.sleep(for: self.requestTimeout)
             } catch {
                 return
             }
             guard !Task.isCancelled else { return }
-            await MainActor.run {
-                self.logger.notice("Location request timed out, using Moscow fallback")
-                self.resolveAll(with: .moscow)
-            }
+            self.logger.notice("Location request timed out, using Moscow fallback")
+            self.resolveAll(with: .moscow)
         }
     }
     

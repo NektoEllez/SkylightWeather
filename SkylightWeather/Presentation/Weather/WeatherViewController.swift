@@ -15,10 +15,11 @@ final class WeatherViewController: UIViewController {
     private let appSettings = AppSettings.shared
 
     private let contentContainer = UIView()
-    private let loadingView = UIActivityIndicatorView(style: .large)
     private var hostingController: UIHostingController<WeatherHostedContent>?
     private var lastObservedLanguageCode: String?
     private var lastNavigationSourceTitle: String?
+    private var refreshThrottleTask: Task<Void, Never>?
+    private var nextAllowedRefreshAt: Date = .distantPast
 
     private lazy var refreshBarButtonItem: UIBarButtonItem = {
         let item = UIBarButtonItem(
@@ -76,6 +77,9 @@ final class WeatherViewController: UIViewController {
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         if isMovingFromParent || isBeingDismissed {
+            refreshThrottleTask?.cancel()
+            refreshThrottleTask = nil
+            coordinator?.setGlobalLoadingVisible(false)
             viewModel.cancelLoading()
             hostingController?.willMove(toParent: nil)
             hostingController?.view.removeFromSuperview()
@@ -96,14 +100,6 @@ final class WeatherViewController: UIViewController {
             contentContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             contentContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             contentContainer.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
-
-        loadingView.translatesAutoresizingMaskIntoConstraints = false
-        loadingView.hidesWhenStopped = true
-        view.addSubview(loadingView)
-        NSLayoutConstraint.activate([
-            loadingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            loadingView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
     }
 
@@ -127,9 +123,11 @@ final class WeatherViewController: UIViewController {
         } onChange: { [weak self] in
             guard let self else { return }
             Task { @MainActor [weak self] in
-                guard let self else { return }
-                applyViewModelChanges()
-                observeViewModel()
+                guard let self,
+                      !self.isBeingDismissed,
+                      !self.isMovingFromParent else { return }
+                self.applyViewModelChanges()
+                self.observeViewModel()
             }
         }
         render()
@@ -153,12 +151,13 @@ final class WeatherViewController: UIViewController {
     // MARK: - Render
 
     private func render() {
-        switch viewModel.state {
-        case .loading:
-            loadingView.startAnimating()
-        case .content, .error, .cityNotFound:
-            loadingView.stopAnimating()
+        let isLoadingState: Bool
+        if case .loading = viewModel.state {
+            isLoadingState = true
+        } else {
+            isLoadingState = false
         }
+        coordinator?.setGlobalLoadingVisible(isLoadingState)
         updateHostedView()
     }
 
@@ -166,8 +165,20 @@ final class WeatherViewController: UIViewController {
 
     @objc
     private func refreshTapped() {
+        let now = Date()
+        guard now >= nextAllowedRefreshAt else { return }
+        nextAllowedRefreshAt = now.addingTimeInterval(2)
+
         HapticManager.shared.lightImpact()
-        viewModel.loadWeather()
+        coordinator?.setGlobalLoadingVisible(true)
+
+        refreshThrottleTask?.cancel()
+        refreshThrottleTask = Task { @MainActor [weak self] in
+            defer { self?.refreshThrottleTask = nil }
+            try? await Task.sleep(for: .seconds(2))
+            guard let self, !Task.isCancelled else { return }
+            self.viewModel.loadWeather()
+        }
     }
 
     @objc
@@ -268,9 +279,13 @@ final class WeatherViewController: UIViewController {
     private func updateHostedView() {
         let view = WeatherHostedContent(
             state: viewModel.state,
+            lastContent: viewModel.lastSuccessfulData,
             onRetry: { [weak self] in
                 HapticManager.shared.lightImpact()
-                self?.viewModel.loadWeather()
+                Task { @MainActor [weak self] in
+                    try? await Task.sleep(for: .seconds(0.2))
+                    self?.viewModel.loadWeather()
+                }
             },
             onAcknowledgeInvalidCity: { [weak self] in
                 HapticManager.shared.warning()

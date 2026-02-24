@@ -40,9 +40,10 @@ protocol WeatherAPIClientProtocol: Sendable {
     /// Network client for WeatherAPI.com.
     /// All methods are `nonisolated` — fetch + JSON decoding run on the cooperative
     /// thread pool, keeping MainActor free for UI work.
-final class WeatherAPIClient: WeatherAPIClientProtocol, @unchecked Sendable {
+final class WeatherAPIClient: WeatherAPIClientProtocol, Sendable {
     
     private let session: URLSession
+    nonisolated private static let decoder = JSONDecoder()
     nonisolated private static let cityNotFoundCodes: Set<Int> = [1003, 1006]
     
     nonisolated init(session: URLSession? = nil) {
@@ -98,7 +99,7 @@ final class WeatherAPIClient: WeatherAPIClientProtocol, @unchecked Sendable {
             }
             
             do {
-                return try JSONDecoder().decode(T.self, from: data)
+                return try Self.decoder.decode(T.self, from: data)
             } catch {
                 AppLog.network.error("Weather API decoding error: \(error.localizedDescription, privacy: .public)")
                 throw APIError.decoding(error)
@@ -118,7 +119,7 @@ final class WeatherAPIClient: WeatherAPIClientProtocol, @unchecked Sendable {
     
     nonisolated private func decodeServerError(from data: Data) -> APIErrorPayload? {
         do {
-            return try JSONDecoder().decode(APIErrorEnvelope.self, from: data).error
+            return try Self.decoder.decode(APIErrorEnvelope.self, from: data).error
         } catch {
             AppLog.network.debug("Server error payload decode failed: \(error.localizedDescription)")
             return nil

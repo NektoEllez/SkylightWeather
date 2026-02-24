@@ -14,6 +14,9 @@ final class AppCoordinator: NSObject {
     private let navigationController = AdaptiveNavigationController()
     private let logger = AppLog.ui
     private weak var presentedSettingsController: UIViewController?
+    private lazy var loadingOverlay = GlobalLoadingOverlayView()
+    private var isLoadingOverlayVisible = false
+    private var didInstallLoadingOverlay = false
     
     init(window: UIWindow) {
         self.window = window
@@ -26,6 +29,7 @@ final class AppCoordinator: NSObject {
         navigationController.setViewControllers([weatherViewController], animated: false)
         window.rootViewController = navigationController
         window.makeKeyAndVisible()
+        installLoadingOverlayIfNeeded()
     }
     
     private func makeSettingsController(appSettings: AppSettings) -> UIViewController {
@@ -65,6 +69,54 @@ final class AppCoordinator: NSObject {
         bar.scrollEdgeAppearance = appearance
         bar.compactAppearance = appearance
     }
+
+    private func installLoadingOverlayIfNeeded() {
+        guard !didInstallLoadingOverlay else { return }
+        didInstallLoadingOverlay = true
+
+        navigationController.loadViewIfNeeded()
+        let hostView = navigationController.view!
+
+        loadingOverlay.translatesAutoresizingMaskIntoConstraints = false
+        loadingOverlay.alpha = 0
+        loadingOverlay.isHidden = true
+
+        hostView.addSubview(loadingOverlay)
+        NSLayoutConstraint.activate([
+            loadingOverlay.topAnchor.constraint(equalTo: hostView.topAnchor),
+            loadingOverlay.leadingAnchor.constraint(equalTo: hostView.leadingAnchor),
+            loadingOverlay.trailingAnchor.constraint(equalTo: hostView.trailingAnchor),
+            loadingOverlay.bottomAnchor.constraint(equalTo: hostView.bottomAnchor)
+        ])
+    }
+
+    private func updateLoadingOverlayVisibility(_ isVisible: Bool) {
+        installLoadingOverlayIfNeeded()
+        guard isLoadingOverlayVisible != isVisible else { return }
+        isLoadingOverlayVisible = isVisible
+
+        if isVisible {
+            loadingOverlay.isHidden = false
+            loadingOverlay.setAnimating(true)
+            UIView.animate(withDuration: 0.18) {
+                self.loadingOverlay.alpha = 1
+            }
+            return
+        }
+
+        UIView.animate(
+            withDuration: 0.18,
+            animations: {
+                self.loadingOverlay.alpha = 0
+            },
+            completion: { [weak self] _ in
+                guard let self else { return }
+                guard self.isLoadingOverlayVisible == false else { return }
+                self.loadingOverlay.setAnimating(false)
+                self.loadingOverlay.isHidden = true
+            }
+        )
+    }
     
 }
 
@@ -74,6 +126,10 @@ extension AppCoordinator: WeatherViewControllerCoordinating {
         let settingsController = makeSettingsController(appSettings: appSettings)
         presentedSettingsController = settingsController
         presenter.present(settingsController, animated: true)
+    }
+
+    func setGlobalLoadingVisible(_ isVisible: Bool) {
+        updateLoadingOverlayVisibility(isVisible)
     }
 }
 

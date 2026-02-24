@@ -24,6 +24,10 @@ struct AppRuntimeConfiguration: Sendable {
     let environment: AppEnvironment
     let weatherAPIScheme: String
     let weatherAPIHost: String
+    // SECURITY NOTE:
+    // Client-side API keys are not truly secret, even when obfuscated.
+    // For production security, keep provider credentials encrypted and managed on backend,
+    // and have the app call your backend/proxy instead of the third-party API directly.
     let weatherAPIKey: String
     
     nonisolated static let shared = load()

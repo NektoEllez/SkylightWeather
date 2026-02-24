@@ -9,7 +9,7 @@ struct ErrorView: View {
     
     let message: String
     let actionTitle: String
-    var iconName: String = "cloud.slash"
+    var iconName: String = "wifi.exclamationmark"
     let onAction: () -> Void
     
     var body: some View {
@@ -50,7 +50,7 @@ struct ErrorView: View {
     ErrorView(
         message: AppSettings.shared.string(.errorNoInternet),
         actionTitle: AppSettings.shared.string(.retry),
-        iconName: "cloud.slash",
+        iconName: "wifi.exclamationmark",
         onAction: {}
     )
     .environment(\.appSettings, AppSettings.shared)
