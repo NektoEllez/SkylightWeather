@@ -548,7 +548,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				WEATHER_API_HOST = api.weatherapi.com;
-				WEATHER_API_KEY = fa8b3df74d4042b9aa7135114252304;
+				WEATHER_API_KEY = "";
 				WEATHER_API_SCHEME = https;
 			};
 			name = Debug;
@@ -601,7 +601,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				WEATHER_API_HOST = api.weatherapi.com;
-				WEATHER_API_KEY = fa8b3df74d4042b9aa7135114252304;
+				WEATHER_API_KEY = "";
 				WEATHER_API_SCHEME = https;
 			};
 			name = Release;
