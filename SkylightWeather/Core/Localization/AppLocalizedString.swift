@@ -57,7 +57,11 @@ enum AppLocalizedString: Hashable {
     case quickCityKazan
     case quickCityNovosibirsk
     case quickCitySochi
-    
+    case precipitationChanceShort
+    case humidityShort
+    case windSpeedShort
+    case windUnit
+
     func localized(for languageCode: String) -> String {
         let translations: [AppLocalizedString: [String: String]] = [
             .appTitle: [
@@ -263,6 +267,22 @@ enum AppLocalizedString: Hashable {
             .quickCitySochi: [
                 "en": "Sochi",
                 "ru": "Сочи"
+            ],
+            .precipitationChanceShort: [
+                "en": "Rain",
+                "ru": "Осадки"
+            ],
+            .humidityShort: [
+                "en": "Humidity",
+                "ru": "Влажность"
+            ],
+            .windSpeedShort: [
+                "en": "Wind",
+                "ru": "Ветер"
+            ],
+            .windUnit: [
+                "en": "km/h",
+                "ru": "км/ч"
             ]
         ]
         
