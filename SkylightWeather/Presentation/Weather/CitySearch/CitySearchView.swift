@@ -65,7 +65,7 @@ struct CitySearchView: View {
             .scrollContentBackground(.hidden)
             .background(Color.clear)
         }
-        .background(.ultraThinMaterial.opacity(0.4))
+        .background(.ultraThinMaterial.opacity(0.25))
         .navigationTitle(settings.string(.citySelectionTitle))
         .navigationBarTitleDisplayMode(.inline)
         .textInputAutocapitalization(.words)
