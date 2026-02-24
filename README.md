@@ -2,12 +2,6 @@
 
 iOS weather app (UIKit + SwiftUI) implemented fully programmatically (no Storyboards).
 
-## Demo Video
-
-- [Watch app demo (MP4)](docs/media/skylight-demo.mp4)
-
-[![Skylight Weather Demo](docs/screenshots/main.png)](docs/media/skylight-demo.mp4)
-
 ## Features
 
 - Current weather for selected source (current location or city)
