@@ -47,21 +47,8 @@ struct WeatherHostedContent: View {
     // MARK: - Preview
 
 #Preview("Content") {
-    let settings = AppSettings.shared
-    let sampleData = WeatherViewData(
-        locationName: settings.string(.quickCityMoscow),
-        temperature: "15°",
-        feelsLike: L10n.format(.feelsLikeFormat, languageCode: settings.languageCode, 13),
-        conditionText: settings.string(.widgetPlaceholderCondition),
-        conditionCode: 1003,
-        isDay: true,
-        windKph: 14,
-        humidity: 68,
-        hourly: [],
-        daily: []
-    )
-    return WeatherHostedContent(
-        state: .content(sampleData),
+    WeatherHostedContent(
+        state: .content(PreviewWeatherData.sample),
         onRetry: {},
         onAcknowledgeInvalidCity: {},
         appSettings: AppSettings.shared

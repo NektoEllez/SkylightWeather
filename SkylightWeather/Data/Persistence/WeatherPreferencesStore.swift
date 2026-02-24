@@ -25,7 +25,8 @@ final class WeatherPreferencesStore {
     }
     
     func saveSelectedCity(_ city: String?) {
-        guard let city, !city.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        // Empty or whitespace-only values are persisted as "no selected city" (same semantics as nil).
+        guard let city = city?.trimmedOrNil else {
             defaults.removeObject(forKey: SharedStorageKeys.selectedCity)
             logger.info("Cleared selected city in preferences")
             return

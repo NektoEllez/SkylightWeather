@@ -27,7 +27,7 @@ struct WeatherMapper {
             isDay: current.current.is_day == 1,
             windKph: current.current.wind_kph,
             humidity: current.current.humidity,
-            hourly: buildHourly(days: days, languageCode: languageCode),
+            hourly: buildHourly(days: days, location: current.location, languageCode: languageCode),
             daily: buildDaily(days: days, languageCode: languageCode)
         )
     }
@@ -36,11 +36,12 @@ struct WeatherMapper {
     
     private static func buildHourly(
         days: [ForecastDTO.ForecastDayDTO],
+        location: CurrentWeatherDTO.LocationDTO,
         languageCode: String
     ) -> [HourlyViewData] {
         guard days.count >= 2 else { return [] }
         
-        let currentHour = Calendar.current.component(.hour, from: Date())
+        let currentHour = locationCurrentHour(location: location)
         
         let todayHours = days[0].hour.filter { hourDTO in
             guard let hour = extractHour(from: hourDTO.time) else {
@@ -89,6 +90,18 @@ struct WeatherMapper {
     }
     
         // MARK: - Helpers
+    
+    /// Current hour in the location's timezone. Falls back to device time if tz_id/localtime_epoch unavailable.
+    private static func locationCurrentHour(location: CurrentWeatherDTO.LocationDTO) -> Int {
+        guard let tzId = location.tz_id,
+              let epoch = location.localtime_epoch,
+              let tz = TimeZone(identifier: tzId) else {
+            return Calendar.current.component(.hour, from: Date())
+        }
+        var cal = Calendar.current
+        cal.timeZone = tz
+        return cal.component(.hour, from: Date(timeIntervalSince1970: TimeInterval(epoch)))
+    }
     
     private static func extractHour(from timeString: String) -> Int? {
         guard let timePart = extractTimePart(from: timeString) else {

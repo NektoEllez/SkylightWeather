@@ -320,16 +320,10 @@ enum L10n {
     }
     
     static func resolveLanguageCode(_ languageCode: String?) -> String {
-        let normalized = languageCode?.lowercased()
-        if let normalized, supportedLanguageCodes.contains(normalized) {
-            return normalized
-        }
-        
-        if let preferred = Locale.preferredLanguages.first?.prefix(2).lowercased(),
-           supportedLanguageCodes.contains(preferred) {
-            return preferred
-        }
-        
-        return fallbackLanguageCode
+        LanguageCodeResolver.resolve(
+            languageCode,
+            supported: supportedLanguageCodes,
+            fallback: fallbackLanguageCode
+        )
     }
 }

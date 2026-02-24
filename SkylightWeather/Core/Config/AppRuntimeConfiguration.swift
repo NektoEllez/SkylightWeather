@@ -31,9 +31,9 @@ struct AppRuntimeConfiguration: Sendable {
     nonisolated private static func load(bundle: Bundle = .main) -> AppRuntimeConfiguration {
         let environment = AppEnvironment(rawValueOrFallback: bundle.string(forInfoDictionaryKey: InfoKey.environment))
         
-        let scheme = bundle.string(forInfoDictionaryKey: InfoKey.weatherAPIScheme)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let host = bundle.string(forInfoDictionaryKey: InfoKey.weatherAPIHost)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let key = bundle.string(forInfoDictionaryKey: InfoKey.weatherAPIKey)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let scheme = bundle.string(forInfoDictionaryKey: InfoKey.weatherAPIScheme)?.trimmed
+        let host = bundle.string(forInfoDictionaryKey: InfoKey.weatherAPIHost)?.trimmed
+        let key = bundle.string(forInfoDictionaryKey: InfoKey.weatherAPIKey)?.trimmed
         
         let resolvedScheme = scheme?.isEmpty == false ? (scheme ?? Defaults.weatherAPIScheme) : Defaults.weatherAPIScheme
         let resolvedHost = host?.isEmpty == false ? (host ?? Defaults.weatherAPIHost) : Defaults.weatherAPIHost

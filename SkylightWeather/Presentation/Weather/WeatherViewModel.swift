@@ -61,8 +61,7 @@ final class WeatherViewModel {
     }
     
     func useCity(_ city: String) {
-        let trimmed = city.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
+        guard let trimmed = city.trimmedOrNil else { return }
         logger.info("Using custom city as weather source")
         rollbackSourceAfterInvalidCity = source
         source = .city(trimmed)

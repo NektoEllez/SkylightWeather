@@ -11,12 +11,9 @@ struct HourlyForecastView: View {
     var onInteractionChanged: ((Bool) -> Void)?
 
     @Environment(\.appSettings) private var settings
-    @State private var isInteracting = false
-    @State private var centeredHourId: String?
-
-    private let rowHeight: CGFloat = 64
-    private let edgeScale: CGFloat = 0.72
-    private let centerInfluenceRows: CGFloat = 2.5
+    @State private var isPagerLocked = false
+    @State private var selectedHourId: String?
+    private let wheelRowHeight: CGFloat = 52
 
     private var visibleHours: [HourlyViewData] { Array(hours.prefix(24)) }
 
@@ -32,15 +29,26 @@ struct HourlyForecastView: View {
         return Array(visibleHours.suffix(from: idx))
     }
 
-    private var centeredIndex: Int {
-        guard let id = centeredHourId else { return 0 }
-        return currentAndFutureHours.firstIndex(where: { $0.id == id }) ?? 0
+    private var nowHourId: String? {
+        currentAndFutureHours.first?.id
+    }
+
+    private var selectedHour: HourlyViewData? {
+        guard let selectedHourId else { return currentAndFutureHours.first }
+        return currentAndFutureHours.first(where: { $0.id == selectedHourId }) ?? currentAndFutureHours.first
     }
 
     var body: some View {
         GeometryReader { geometry in
-            let scrollAreaHeight = geometry.size.height - (pastHours.isEmpty ? 0 : (pastStripHeight + 1))
+            let headerHeight: CGFloat = 156
+            let separatorHeight: CGFloat = 1
+            let scrollAreaHeight = geometry.size.height - (pastHours.isEmpty ? 0 : (pastStripHeight + 1)) - headerHeight - separatorHeight
             VStack(spacing: 0) {
+                if let selectedHour {
+                    selectedHourHeader(selectedHour)
+                        .frame(height: headerHeight)
+                    stripSeparator
+                }
                 if !pastHours.isEmpty {
                     pastHoursStrip
                     stripSeparator
@@ -48,11 +56,15 @@ struct HourlyForecastView: View {
                 futureScroll(containerHeight: scrollAreaHeight)
             }
         }
-        .onAppear {
-            synchronizeCenteredHourId()
+        .onChange(of: hours, initial: true) { _, _ in
+            synchronizeSelection()
         }
-        .onChange(of: hours) { _, _ in
-            synchronizeCenteredHourId()
+        .onChange(of: selectedHourId) { oldValue, newValue in
+            handleSelectionChange(oldValue: oldValue, newValue: newValue)
+        }
+        .onDisappear {
+            selectedHourId = nowHourId
+            setPagerLockState(false)
         }
     }
 
@@ -91,134 +103,157 @@ struct HourlyForecastView: View {
             .padding(.horizontal, 16)
     }
 
-    // MARK: - Current + future (vertical scroll, drum)
+    private func selectedHourHeader(_ hour: HourlyViewData) -> some View {
+        let timeText = hour.isNow ? settings.string(.now) : hour.time
+        return VStack(spacing: 6) {
+            HStack(spacing: 0) {
+                Text(timeText)
+                    .font(.system(.title3, design: .rounded, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-    private func futureScroll(containerHeight: CGFloat) -> some View {
-        let verticalInset = max((containerHeight - rowHeight) / 2, 0)
-        return ScrollView(.vertical, showsIndicators: false) {
-            LazyVStack(spacing: 0) {
-                ForEach(Array(currentAndFutureHours.enumerated()), id: \.element.id) { index, hour in
-                    hourRow(hour, index: index)
-                        .frame(height: rowHeight)
-                        .id(hour.id)
-                }
+                WeatherAnimationView(conditionCode: hour.conditionCode, isDay: hour.isDay)
+                    .frame(width: 100, height: 100)
+
+                Text(hour.temperature)
+                    .font(.system(.title2, design: .rounded, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
-            .scrollTargetLayout()
-            .padding(.top, verticalInset)
-            .padding(.bottom, verticalInset)
+
+            Text(selectedHourInfoText(hour))
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(.white.opacity(0.82))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
         }
-        .scrollPosition(id: $centeredHourId, anchor: .center)
-        .scrollTargetBehavior(.viewAligned)
-        .accessibilityIdentifier("hourly_inner_scroll")
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 3)
-                .onChanged { _ in setInteractionState(true) }
-                .onEnded { _ in setInteractionState(false) }
-        )
-        .onDisappear { setInteractionState(false) }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
     }
 
-    // MARK: - Row (drum: scale/opacity by distance from center)
+    private func selectedHourInfoText(_ hour: HourlyViewData) -> String {
+        let precipPart = "\(settings.string(.precipitationChanceShort)) \(hour.precipitationChance)%"
+        let humidityPart = hour.humidity.map { "\($0)%" }
+        let windPart = hour.windKph.map {
+            "\(settings.string(.windSpeedShort)) \(Int($0)) \(settings.string(.windUnit))"
+        }
+        return [precipPart, humidityPart, windPart]
+            .compactMap { $0 }
+            .joined(separator: " · ")
+    }
 
-    private func hourRow(_ hour: HourlyViewData, index: Int) -> some View {
-        let isCentered = index == centeredIndex
-        let progress = min(CGFloat(abs(index - centeredIndex)) / centerInfluenceRows, 1)
-        let scale = 1 - progress * (1 - edgeScale)
-        let opacity = 1 - progress * 0.28
+    // MARK: - Current + future (native wheel picker)
+
+    private func futureScroll(containerHeight: CGFloat) -> some View {
+        Picker("", selection: $selectedHourId) {
+            ForEach(currentAndFutureHours) { hour in
+                wheelRow(hour)
+                    .tag(Optional(hour.id))
+            }
+        }
+        .labelsHidden()
+        .pickerStyle(.wheel)
+        .clipped()
+        .frame(height: max(containerHeight, 0))
+        .accessibilityIdentifier("hourly_inner_scroll")
+    }
+
+    // MARK: - Row
+
+    private func wheelRow(_ hour: HourlyViewData) -> some View {
         let timeText = hour.isNow ? settings.string(.now) : hour.time
-        let timeColor: Double = isCentered ? 1 : 0.5
 
         return HStack(spacing: 0) {
             Text(timeText)
-                .font(.system(.subheadline, design: .rounded, weight: isCentered ? .semibold : .regular))
-                .foregroundStyle(.white.opacity(timeColor))
-                .frame(width: 58, alignment: .leading)
+                .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 76, alignment: .leading)
 
-            WeatherAnimationView(conditionCode: hour.conditionCode, isDay: hour.isDay)
+            Image(systemName: sfSymbol(for: hour.conditionCode, isDay: hour.isDay))
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.95))
                 .frame(width: 34, height: 34)
 
-            Spacer(minLength: 8)
-
-            rowInfoLabel(hour, isCentered: isCentered)
-                .frame(minWidth: 120, alignment: .trailing)
+            Spacer(minLength: 12)
 
             Text(hour.temperature)
-                .font(.system(.body, design: .rounded, weight: isCentered ? .semibold : .regular))
-                .foregroundStyle(.white.opacity(opacity))
+                .font(.system(.body, design: .rounded, weight: .semibold))
+                .foregroundStyle(.white)
                 .frame(width: 48, alignment: .trailing)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 9)
-        .scaleEffect(scale)
-        .opacity(opacity)
-        .background(isCentered ? Color.white.opacity(0.08) : Color.clear)
+        .padding(.horizontal, 16)
+        .frame(height: wheelRowHeight)
+        .contentShape(Rectangle())
+    }
+
+    private func sfSymbol(for conditionCode: Int, isDay: Bool) -> String {
+        switch conditionCode {
+        case 1000:
+            return isDay ? "sun.max.fill" : "moon.stars.fill"
+        case 1003, 1006, 1009:
+            return "cloud.fill"
+        case 1063, 1180...1201:
+            return "cloud.rain.fill"
+        case 1066, 1210...1225:
+            return "snowflake"
+        case 1087, 1273...1282:
+            return "cloud.bolt.rain.fill"
+        default:
+            return "cloud.fill"
+        }
     }
 
     @ViewBuilder
-    private func rowInfoLabel(_ hour: HourlyViewData, isCentered: Bool) -> some View {
-        let primaryOpacity: Double = isCentered ? 0.9 : 0.55
-        let secondaryOpacity: Double = isCentered ? 0.65 : 0.38
-
+    private func rowInfoLabel(_ hour: HourlyViewData) -> some View {
         let windPart = hour.windKph.map {
             "\(settings.string(.windSpeedShort)) \(Int($0)) \(settings.string(.windUnit))"
         }
         let humPart = hour.humidity.map { "\($0)%" }
-        let secondaryParts = [windPart, humPart].compactMap { $0 }
+        let precipPart = hour.precipitationChance > 0
+            ? "\(settings.string(.precipitationChanceShort)) \(hour.precipitationChance)%"
+            : nil
+        let parts = [precipPart, windPart, humPart].compactMap { $0 }
 
-        VStack(alignment: .trailing, spacing: 1) {
-            // Line 1 — precipitation (primary)
-            if hour.precipitationChance > 0 {
-                Text("\(settings.string(.precipitationChanceShort)) \(hour.precipitationChance)%")
-                    .font(.system(.caption, design: .rounded, weight: isCentered ? .medium : .regular))
-                    .foregroundStyle(.white.opacity(primaryOpacity))
-            } else {
-                Text(" ").font(.caption)
-            }
-
-            // Line 2 — wind + humidity (secondary)
-            if secondaryParts.isEmpty {
-                Text(" ").font(.caption2)
-            } else {
-                Text(secondaryParts.joined(separator: " · "))
-                    .font(.system(.caption2, design: .rounded))
-                    .foregroundStyle(.white.opacity(secondaryOpacity))
-                    .minimumScaleFactor(0.85)
-                    .lineLimit(1)
-            }
+        if parts.isEmpty {
+            Text(" ")
+                .font(.system(.caption, design: .rounded))
+        } else {
+            Text(parts.joined(separator: " · "))
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(.white.opacity(0.78))
+                .minimumScaleFactor(0.85)
+                .lineLimit(1)
         }
     }
 
-    private func setInteractionState(_ value: Bool) {
-        guard isInteracting != value else { return }
-        isInteracting = value
+    private func setPagerLockState(_ value: Bool) {
+        guard isPagerLocked != value else { return }
+        isPagerLocked = value
         onInteractionChanged?(value)
     }
 
-    private func synchronizeCenteredHourId() {
+    private func handleSelectionChange(oldValue: String?, newValue: String?) {
+        guard oldValue != newValue else { return }
+        if oldValue != nil, newValue != nil {
+            HapticManager.shared.selectionChanged()
+        }
+    }
+
+    private func synchronizeSelection() {
         let availableIDs = Set(currentAndFutureHours.map(\.id))
-        if let centeredHourId, availableIDs.contains(centeredHourId) {
+        if let selectedHourId, availableIDs.contains(selectedHourId) {
             return
         }
-        centeredHourId = currentAndFutureHours.first?.id
+        selectedHourId = nowHourId
     }
 }
 
 // MARK: - Preview
 
 #Preview {
-    let settings = AppSettings.shared
-    let sampleHours: [HourlyViewData] = [
-        .init(id: "0", time: "12:00", temperature: "13°", conditionCode: 1000, isDay: true, isNow: false, precipitationChance: 0, windKph: 5, humidity: 65),
-        .init(id: "1", time: "13:00", temperature: "14°", conditionCode: 1003, isDay: true, isNow: false, precipitationChance: 20, windKph: 8, humidity: 70),
-        .init(id: "2", time: settings.string(.now), temperature: "15°", conditionCode: 1003, isDay: true, isNow: true, precipitationChance: 30, windKph: 12, humidity: 72),
-        .init(id: "3", time: "15:00", temperature: "16°", conditionCode: 1003, isDay: true, isNow: false, precipitationChance: 45, windKph: 8, humidity: 68),
-        .init(id: "4", time: "16:00", temperature: "17°", conditionCode: 1000, isDay: true, isNow: false, precipitationChance: 0, windKph: 5, humidity: 55),
-        .init(id: "5", time: "17:00", temperature: "16°", conditionCode: 1180, isDay: true, isNow: false, precipitationChance: 80, windKph: 22, humidity: 90),
-        .init(id: "6", time: "18:00", temperature: "14°", conditionCode: 1066, isDay: false, isNow: false, precipitationChance: 10, windKph: 3, humidity: 85),
-        .init(id: "7", time: "19:00", temperature: "12°", conditionCode: 1066, isDay: false, isNow: false, precipitationChance: 100, windKph: 28, humidity: 95)
-    ]
-    return HourlyForecastView(hours: sampleHours)
+    HourlyForecastView(hours: PreviewWeatherData.hourly)
         .frame(height: 468)
-        .background(WeatherGradientColors.colors(for: 1003).first ?? .blue)
+        .background(PreviewWeatherData.gradientBackground)
         .environment(\.appSettings, AppSettings.shared)
 }

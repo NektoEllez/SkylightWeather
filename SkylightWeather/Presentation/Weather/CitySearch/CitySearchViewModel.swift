@@ -26,8 +26,8 @@ final class CitySearchViewModel: NSObject {
         completer.delegate = self
         completer.resultTypes = [.address, .query]
         
-        if !initialQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            updateQuery(initialQuery)
+        if let normalized = initialQuery.trimmedOrNil {
+            updateQuery(normalized)
         }
     }
     
@@ -39,8 +39,7 @@ final class CitySearchViewModel: NSObject {
     private func scheduleSearch(for rawQuery: String) {
         debounceTask?.cancel()
         
-        let trimmed = rawQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
+        guard let trimmed = rawQuery.trimmedOrNil else {
             suggestions = []
             isLoading = false
             completer.queryFragment = ""
@@ -101,10 +100,8 @@ struct CitySearchSuggestion: Identifiable, Hashable {
     let queryKey: String
     
     init?(completion: MKLocalSearchCompletion) {
-        let normalizedTitle = completion.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedSubtitle = completion.subtitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        guard !normalizedTitle.isEmpty else { return nil }
+        guard let normalizedTitle = completion.title.trimmedOrNil else { return nil }
+        let normalizedSubtitle = completion.subtitle.trimmed
         
         title = normalizedTitle
         subtitle = normalizedSubtitle

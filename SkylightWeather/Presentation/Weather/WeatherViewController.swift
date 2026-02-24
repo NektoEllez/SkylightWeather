@@ -120,34 +120,33 @@ final class WeatherViewController: UIViewController {
 
     private func observeViewModel() {
         withObservationTracking {
-            _ = self.viewModel.state
-            _ = self.viewModel.source
-            _ = self.appSettings.colorScheme
-            _ = self.appSettings.languageCode
+            _ = viewModel.state
+            _ = viewModel.source
+            _ = appSettings.colorScheme
+            _ = appSettings.languageCode
         } onChange: { [weak self] in
             guard let self else { return }
             Task { @MainActor [weak self] in
                 guard let self else { return }
-                let previousLanguageCode = self.lastObservedLanguageCode
-                let currentLang = self.appSettings.languageCode
-                let languageChanged = previousLanguageCode != currentLang
-                if languageChanged {
-                    self.lastObservedLanguageCode = currentLang
-                    self.viewModel.loadWeather()
-                }
-
-                let sourceTitle = self.viewModel.displaySourceTitle(languageCode: currentLang)
-                let sourceChanged = self.lastNavigationSourceTitle != sourceTitle
-                if languageChanged || sourceChanged {
-                    self.lastNavigationSourceTitle = sourceTitle
-                    self.setupNavigationItems()
-                }
-
-                self.applyAppearance()
-                self.render()
-                self.observeViewModel()
+                applyViewModelChanges()
+                observeViewModel()
             }
         }
+        render()
+    }
+
+    private func applyViewModelChanges() {
+        let currentLang = appSettings.languageCode
+        if lastObservedLanguageCode != currentLang {
+            lastObservedLanguageCode = currentLang
+            viewModel.loadWeather()
+        }
+        let sourceTitle = viewModel.displaySourceTitle(languageCode: currentLang)
+        if lastNavigationSourceTitle != sourceTitle {
+            lastNavigationSourceTitle = sourceTitle
+            setupNavigationItems()
+        }
+        applyAppearance()
         render()
     }
 

@@ -10,3 +10,8 @@ Package.resolved
 
 # macOS
 .DS_Store
+
+# IDE / tooling (Claude, Cursor, Cline)
+.claude/
+.clinerules-*
+.cursor/

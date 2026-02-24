@@ -36,6 +36,42 @@ final class SkylightWeatherUITests: XCTestCase {
     }
 
     @MainActor
+    func testCardsPagerSwipeFromFirstToSecondCard() throws {
+        let app = launchApp()
+
+        let pageIndicator = element(app, id: "weather_page_indicator")
+        XCTAssertTrue(pageIndicator.waitForExistence(timeout: 20))
+        XCTAssertEqual(pageIndicator.value as? String, "1/3")
+
+        let cardsPager = element(app, id: "weather_cards_pager")
+        XCTAssertTrue(cardsPager.waitForExistence(timeout: 20))
+        cardsPager.swipeLeft()
+
+        XCTAssertTrue(waitForPageIndicatorValue(pageIndicator, expected: "2/3", timeout: 5))
+    }
+
+    @MainActor
+    func testFirstCardSupportsVerticalScrollGestures() throws {
+        let app = launchApp()
+
+        let pageIndicator = element(app, id: "weather_page_indicator")
+        XCTAssertTrue(pageIndicator.waitForExistence(timeout: 20))
+        XCTAssertEqual(pageIndicator.value as? String, "1/3")
+
+        let verticalScroll = element(app, id: "weather_vertical_scroll")
+        XCTAssertTrue(verticalScroll.waitForExistence(timeout: 20))
+
+        let nowCard = element(app, id: "weather_card_now")
+        XCTAssertTrue(nowCard.waitForExistence(timeout: 10))
+
+        nowCard.swipeUp()
+        XCTAssertEqual(pageIndicator.value as? String, "1/3")
+
+        nowCard.swipeDown()
+        XCTAssertEqual(pageIndicator.value as? String, "1/3")
+    }
+
+    @MainActor
     func testHourlyInnerScrollDoesNotSwitchPagerCard() throws {
         let app = launchApp()
 
@@ -48,8 +84,14 @@ final class SkylightWeatherUITests: XCTestCase {
         cardsPager.swipeLeft()
         XCTAssertTrue(waitForPageIndicatorValue(pageIndicator, expected: "2/3", timeout: 5))
 
-        let hourlyInnerScroll = element(app, id: "hourly_inner_scroll")
-        XCTAssertTrue(hourlyInnerScroll.waitForExistence(timeout: 5))
+        let hourlyCard = element(app, id: "weather_card_hourly")
+        XCTAssertTrue(hourlyCard.waitForExistence(timeout: 10))
+
+        let hourlyInnerScroll = hourlyCard
+            .descendants(matching: .any)
+            .matching(identifier: "hourly_inner_scroll")
+            .firstMatch
+        XCTAssertTrue(hourlyInnerScroll.waitForExistence(timeout: 10))
         hourlyInnerScroll.swipeLeft()
 
         XCTAssertEqual(pageIndicator.value as? String, "2/3")

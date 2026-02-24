@@ -70,21 +70,8 @@ struct CurrentWeatherView: View {
     // MARK: - Preview
 
 #Preview {
-    let settings = AppSettings.shared
-    let sampleData = WeatherViewData(
-        locationName: settings.string(.quickCityMoscow),
-        temperature: "15°",
-        feelsLike: L10n.format(.feelsLikeFormat, languageCode: settings.languageCode, 13),
-        conditionText: settings.string(.widgetPlaceholderCondition),
-        conditionCode: 1003,
-        isDay: true,
-        windKph: 14,
-        humidity: 68,
-        hourly: [],
-        daily: []
-    )
-    return CurrentWeatherView(data: sampleData)
+    CurrentWeatherView(data: PreviewWeatherData.sample)
         .padding()
-        .background(WeatherGradientColors.colors(for: 1003).first ?? .blue)
+        .background(PreviewWeatherData.gradientBackground)
         .environment(\.appSettings, AppSettings.shared)
 }

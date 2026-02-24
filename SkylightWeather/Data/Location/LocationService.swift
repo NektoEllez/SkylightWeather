@@ -16,7 +16,7 @@ final class LocationService {
     private let manager = CLLocationManager()
     private let logger = AppLog.location
     private lazy var coordinator = Coordinator(owner: self)
-    private var continuations: [CheckedContinuation<CLLocationCoordinate2D, Never>] = []
+    private var continuations: [UUID: CheckedContinuation<CLLocationCoordinate2D, Never>] = [:]
     private var isRequestInFlight = false
     private var isAwaitingAuthorization = false
     private var timeoutTask: Task<Void, Never>?
@@ -31,24 +31,41 @@ final class LocationService {
             return .moscow
         }
         
-        return await withCheckedContinuation { continuation in
-            continuations.append(continuation)
-            
-            guard !isRequestInFlight else { return }
-            
-            isRequestInFlight = true
-            manager.delegate = coordinator
-            manager.desiredAccuracy = kCLLocationAccuracyKilometer
-            scheduleRequestTimeout()
-            
-            if status == .notDetermined {
-                logger.debug("Location permission not determined, requesting authorization")
-                isAwaitingAuthorization = true
-                manager.requestWhenInUseAuthorization()
-            } else {
-                isAwaitingAuthorization = false
-                manager.requestLocation()
+        let requestID = UUID()
+        return await withTaskCancellationHandler(operation: {
+            await withCheckedContinuation { continuation in
+                continuations[requestID] = continuation
+                
+                guard !isRequestInFlight else { return }
+                
+                isRequestInFlight = true
+                manager.delegate = coordinator
+                manager.desiredAccuracy = kCLLocationAccuracyKilometer
+                scheduleRequestTimeout()
+                
+                if status == .notDetermined {
+                    logger.debug("Location permission not determined, requesting authorization")
+                    isAwaitingAuthorization = true
+                    manager.requestWhenInUseAuthorization()
+                } else {
+                    isAwaitingAuthorization = false
+                    manager.requestLocation()
+                }
             }
+        }, onCancel: { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.cancelPendingRequest(id: requestID)
+            }
+        })
+    }
+
+    private func cancelPendingRequest(id: UUID) {
+        guard let continuation = continuations.removeValue(forKey: id) else { return }
+        logger.notice("Location request task cancelled, using Moscow fallback for caller")
+        continuation.resume(returning: .moscow)
+
+        if continuations.isEmpty {
+            resetRequestState()
         }
     }
     
@@ -58,14 +75,18 @@ final class LocationService {
     
     private func resolveAll(with coordinate: CLLocationCoordinate2D) {
         logger.debug("Resolved location request")
+        let pending = continuations
+        continuations = [:]
+        resetRequestState()
+        pending.values.forEach { $0.resume(returning: coordinate) }
+    }
+
+    private func resetRequestState() {
         timeoutTask?.cancel()
         timeoutTask = nil
         manager.delegate = nil
-        let pending = continuations
-        continuations.removeAll()
         isRequestInFlight = false
         isAwaitingAuthorization = false
-        pending.forEach { $0.resume(returning: coordinate) }
     }
     
     private func scheduleRequestTimeout() {

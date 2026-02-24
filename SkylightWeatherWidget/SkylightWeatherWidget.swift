@@ -40,11 +40,11 @@ private enum WidgetL10n {
     }
     
     private static func resolveLanguageCode(_ languageCode: String?) -> String {
-        let normalized = languageCode?.lowercased()
-        if let normalized, supportedLanguages.contains(normalized) {
-            return normalized
-        }
-        return fallbackLanguage
+        LanguageCodeResolver.resolve(
+            languageCode,
+            supported: supportedLanguages,
+            fallback: fallbackLanguage
+        )
     }
     
     private static let translations: [WidgetLocalizedKey: [String: String]] = [

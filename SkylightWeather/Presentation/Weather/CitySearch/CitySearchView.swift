@@ -55,22 +55,25 @@ struct CitySearchView: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
+                        .listRowBackground(Color.clear)
                         .accessibilityIdentifier("city_search_suggestion_\(suggestion.id)")
                     }
                 }
             }
             .accessibilityIdentifier("city_search_list")
             .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Color.clear)
         }
+        .background(.ultraThinMaterial.opacity(0.4))
         .navigationTitle(settings.string(.citySelectionTitle))
         .navigationBarTitleDisplayMode(.inline)
         .textInputAutocapitalization(.words)
         .autocorrectionDisabled(true)
         .ignoresSafeArea(.keyboard, edges: .bottom)
-        .onAppear {
-            Task { @MainActor in
-                isSearchFocused = true
-            }
+        .task { @MainActor in
+            guard !Task.isCancelled else { return }
+            isSearchFocused = true
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -129,7 +132,7 @@ struct CitySearchView: View {
     }
     
     private var trimmedQuery: String {
-        viewModel.query.trimmingCharacters(in: .whitespacesAndNewlines)
+        viewModel.query.trimmed
     }
     
     private func hintRow(_ text: String) -> some View {
@@ -137,6 +140,7 @@ struct CitySearchView: View {
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .center)
             .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
     }
     
     private func submitManualCity() {

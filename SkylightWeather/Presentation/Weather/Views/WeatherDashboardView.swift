@@ -28,6 +28,7 @@ struct WeatherDashboardView: View {
                 }
                 .padding(.vertical, 20)
             }
+            .accessibilityIdentifier("weather_vertical_scroll")
         }
         .accessibilityIdentifier("weather_dashboard")
     }
@@ -141,43 +142,11 @@ struct WeatherDashboardView: View {
 // MARK: - Preview
 
 #Preview {
-    let settings = AppSettings.shared
-    let sampleData = WeatherViewData(
-        locationName: settings.string(.quickCityMoscow),
-        temperature: "15°",
-        feelsLike: L10n.format(.feelsLikeFormat, languageCode: settings.languageCode, 13),
-        conditionText: settings.string(.widgetPlaceholderCondition),
-        conditionCode: 1003,
-        isDay: true,
-        windKph: 14,
-        humidity: 68,
-        hourly: [
-            .init(id: "1", time: settings.string(.now), temperature: "15°", conditionCode: 1003, isDay: true, isNow: true, precipitationChance: 0, windKph: nil, humidity: 70),
-            .init(id: "2", time: "14:00", temperature: "16°", conditionCode: 1003, isDay: true, isNow: false, precipitationChance: 30, windKph: 12, humidity: 72)
-        ],
-        daily: [
-            .init(id: "1", weekday: settings.string(.today), minTemp: "10°", maxTemp: "18°", conditionCode: 1003, isDay: true, windKph: 14, humidity: 65),
-            .init(id: "2", weekday: "Пн", minTemp: "8°", maxTemp: "16°", conditionCode: 1180, isDay: true, windKph: 22, humidity: 80)
-        ]
-    )
-    WeatherDashboardView(data: sampleData)
+    WeatherDashboardView(data: PreviewWeatherData.sample)
         .environment(\.appSettings, AppSettings.shared)
 }
 
 #Preview("Rain") {
-    let settings = AppSettings.shared
-    let rainData = WeatherViewData(
-        locationName: settings.string(.quickCitySaintPetersburg),
-        temperature: "8°",
-        feelsLike: L10n.format(.feelsLikeFormat, languageCode: settings.languageCode, 5),
-        conditionText: settings.string(.widgetPlaceholderCondition),
-        conditionCode: 1180,
-        isDay: true,
-        windKph: 32,
-        humidity: 88,
-        hourly: [],
-        daily: []
-    )
-    return WeatherDashboardView(data: rainData)
+    WeatherDashboardView(data: PreviewWeatherData.rain)
         .environment(\.appSettings, AppSettings.shared)
 }

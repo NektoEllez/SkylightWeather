@@ -93,15 +93,9 @@ struct DailyForecastView: View {
     // MARK: - Preview
 
 #Preview {
-    let settings = AppSettings.shared
-    let sampleDays: [DailyViewData] = [
-        .init(id: "1", weekday: settings.string(.today), minTemp: "10°", maxTemp: "18°", conditionCode: 1003, isDay: true, windKph: 14, humidity: 65),
-        .init(id: "2", weekday: "Пн", minTemp: "8°", maxTemp: "16°", conditionCode: 1180, isDay: true, windKph: 22, humidity: 80),
-        .init(id: "3", weekday: "Вт", minTemp: "5°", maxTemp: "12°", conditionCode: 1066, isDay: true, windKph: 8, humidity: 72)
-    ]
-    return DailyForecastView(days: sampleDays)
+    DailyForecastView(days: PreviewWeatherData.daily)
         .padding()
         .frame(height: 340)
-        .background(WeatherGradientColors.colors(for: 1003).first ?? .blue)
+        .background(PreviewWeatherData.gradientBackground)
         .environment(\.appSettings, AppSettings.shared)
 }

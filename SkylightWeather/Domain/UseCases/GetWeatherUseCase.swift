@@ -46,12 +46,13 @@ final class GetWeatherUseCase {
     private func resolveQuery(for source: WeatherRequestSource) async -> String {
         switch source {
             case .city(let city):
-                let trimmed = city.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !trimmed.isEmpty {
+                if let trimmed = city.trimmedOrNil {
                     logger.debug("Resolved source query from custom city")
                     return trimmed
                 }
-                fallthrough
+                logger.notice("Received empty city source, falling back to geolocation")
+                let coord = await locationService.requestLocation()
+                return Endpoint.coordinateQuery(lat: coord.latitude, lon: coord.longitude)
                 
             case .currentLocation:
                 logger.debug("Resolving source query from geolocation")
@@ -60,4 +61,3 @@ final class GetWeatherUseCase {
         }
     }
 }
-
