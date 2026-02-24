@@ -239,21 +239,6 @@ final class WeatherViewController: UIViewController {
     }
 
     private func updateNavigationTitleView() {
-        let sourceText = L10n.format(
-            .sourcePrefixFormat,
-            languageCode: appSettings.languageCode,
-            viewModel.displaySourceTitle(languageCode: appSettings.languageCode)
-        )
-
-        let sourceLabel = UILabel()
-        sourceLabel.text = sourceText
-        sourceLabel.font = .systemFont(ofSize: 14, weight: .regular)
-        sourceLabel.textColor = .secondaryLabel
-        sourceLabel.textAlignment = .center
-        sourceLabel.numberOfLines = 1
-        sourceLabel.lineBreakMode = .byTruncatingTail
-        sourceLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-
         let titleLabel = UILabel()
         titleLabel.text = appSettings.string(.appTitle)
         titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
@@ -262,13 +247,12 @@ final class WeatherViewController: UIViewController {
         titleLabel.numberOfLines = 1
         titleLabel.lineBreakMode = .byTruncatingTail
 
-        let stack = UIStackView(arrangedSubviews: [sourceLabel, titleLabel])
+        let stack = UIStackView(arrangedSubviews: [titleLabel])
         stack.axis = .vertical
         stack.alignment = .center
-        stack.spacing = 2
+        stack.spacing = 0
         stack.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         stack.accessibilityIdentifier = "nav_title_stack"
-        sourceLabel.accessibilityIdentifier = "nav_source_label"
         titleLabel.accessibilityIdentifier = "nav_app_title_label"
         navigationItem.titleView = stack
     }
