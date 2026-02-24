@@ -4,8 +4,11 @@
     //
 
 import Foundation
+import os
 
 struct WeatherMapper {
+    private static let logger = AppLog.mapper
+    private static let placeholder = "\u{2014}"
     
     static func map(current: CurrentWeatherDTO, forecast: ForecastDTO) -> WeatherViewData {
         let days = forecast.forecast.forecastday
@@ -22,6 +25,8 @@ struct WeatherMapper {
             conditionText: current.current.condition.text,
             conditionCode: current.current.condition.code,
             isDay: current.current.is_day == 1,
+            windKph: current.current.wind_kph,
+            humidity: current.current.humidity,
             hourly: buildHourly(days: days, languageCode: languageCode),
             daily: buildDaily(days: days, languageCode: languageCode)
         )
@@ -38,7 +43,10 @@ struct WeatherMapper {
         let currentHour = Calendar.current.component(.hour, from: Date())
         
         let todayHours = days[0].hour.filter { hourDTO in
-            let hour = extractHour(from: hourDTO.time)
+            guard let hour = extractHour(from: hourDTO.time) else {
+                logger.error("Skipping invalid hourly time format: \(hourDTO.time, privacy: .public)")
+                return false
+            }
             return hour >= currentHour
         }
         
@@ -54,7 +62,8 @@ struct WeatherMapper {
                 isDay: dto.is_day == 1,
                 isNow: index == 0,
                 precipitationChance: precipChance,
-                windKph: dto.wind_kph
+                windKph: dto.wind_kph,
+                humidity: dto.humidity
             )
         }
     }
@@ -72,18 +81,25 @@ struct WeatherMapper {
                 minTemp: "\(Int(day.day.mintemp_c))\u{00B0}",
                 maxTemp: "\(Int(day.day.maxtemp_c))\u{00B0}",
                 conditionCode: day.day.condition.code,
-                isDay: true
+                isDay: true,
+                windKph: day.day.maxwind_kph,
+                humidity: day.day.avghumidity
             )
         }
     }
     
         // MARK: - Helpers
     
-    private static func extractHour(from timeString: String) -> Int {
-        let parts = timeString.split(separator: " ")
-        guard parts.count == 2 else { return 0 }
-        let timePart = parts[1].split(separator: ":")
-        return Int(timePart[0]) ?? 0
+    private static func extractHour(from timeString: String) -> Int? {
+        guard let timePart = extractTimePart(from: timeString) else {
+            return nil
+        }
+        let components = timePart.split(separator: ":")
+        guard let hourToken = components.first, let hour = Int(hourToken), (0...23).contains(hour) else {
+            logger.error("Invalid hour value in forecast time: \(timeString, privacy: .public)")
+            return nil
+        }
+        return hour
     }
     
     private static func formatHourTime(
@@ -94,16 +110,21 @@ struct WeatherMapper {
         if isFirst {
             return L10n.text(.now, languageCode: languageCode)
         }
-        let parts = timeString.split(separator: " ")
-        guard parts.count == 2 else { return "" }
-        return String(parts[1])
+        guard let timePart = extractTimePart(from: timeString) else {
+            logger.error("Invalid hour time format in forecast: \(timeString, privacy: .public)")
+            return placeholder
+        }
+        return timePart
     }
     
     private static func formatWeekday(_ dateString: String, languageCode: String) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        guard let date = formatter.date(from: dateString) else { return "" }
+        guard let date = formatter.date(from: dateString) else {
+            logger.error("Invalid date format in forecast: \(dateString, privacy: .public)")
+            return placeholder
+        }
         
         if Calendar.current.isDateInToday(date) {
             return L10n.text(.today, languageCode: languageCode)
@@ -113,5 +134,12 @@ struct WeatherMapper {
         weekdayFormatter.locale = L10n.locale(for: languageCode)
         weekdayFormatter.dateFormat = "EEE"
         return weekdayFormatter.string(from: date).capitalized
+    }
+
+    private static func extractTimePart(from timeString: String) -> String? {
+        let parts = timeString.split(separator: " ")
+        guard parts.count == 2 else { return nil }
+        let timePart = String(parts[1])
+        return timePart.contains(":") ? timePart : nil
     }
 }

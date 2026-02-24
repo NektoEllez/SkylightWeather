@@ -47,30 +47,19 @@ struct WeatherDashboardView: View {
 
     @ViewBuilder
     private var cards: some View {
-        if #available(iOS 17.0, *) {
-            HorizontalPagingScrollView(
-                pageCount: 3,
-                selectedIndex: $selectedCard,
-                scrollEnabled: !isHourlyScrollInteracting,
-                horizontalPadding: 0,
-                cardWidthRatio: 0.86,
-                pinchScale: 0.93,
-                verticalPadding: 24
-            ) { index in
-                card(at: index)
-            }
-            .accessibilityIdentifier("weather_cards_pager")
-            .frame(height: 468)
-        } else {
-            VStack(spacing: 12) {
-                card(at: 0)
-                    .frame(height: 270)
-                card(at: 1)
-                    .frame(height: 330)
-                card(at: 2)
-                    .frame(height: 330)
-            }
+        HorizontalPagingScrollView(
+            pageCount: 3,
+            selectedIndex: $selectedCard,
+            scrollEnabled: !isHourlyScrollInteracting,
+            horizontalPadding: 0,
+            cardWidthRatio: 0.86,
+            pinchScale: 0.93,
+            verticalPadding: 24
+        ) { index in
+            card(at: index)
         }
+        .accessibilityIdentifier("weather_cards_pager")
+        .frame(height: 468)
     }
 
     private var dailyForecastTitle: String {
@@ -160,13 +149,15 @@ struct WeatherDashboardView: View {
         conditionText: settings.string(.widgetPlaceholderCondition),
         conditionCode: 1003,
         isDay: true,
+        windKph: 14,
+        humidity: 68,
         hourly: [
-            .init(id: "1", time: settings.string(.now), temperature: "15°", conditionCode: 1003, isDay: true, isNow: true, precipitationChance: 0, windKph: nil),
-            .init(id: "2", time: "14:00", temperature: "16°", conditionCode: 1003, isDay: true, isNow: false, precipitationChance: 30, windKph: 12)
+            .init(id: "1", time: settings.string(.now), temperature: "15°", conditionCode: 1003, isDay: true, isNow: true, precipitationChance: 0, windKph: nil, humidity: 70),
+            .init(id: "2", time: "14:00", temperature: "16°", conditionCode: 1003, isDay: true, isNow: false, precipitationChance: 30, windKph: 12, humidity: 72)
         ],
         daily: [
-            .init(id: "1", weekday: settings.string(.today), minTemp: "10°", maxTemp: "18°", conditionCode: 1003, isDay: true),
-            .init(id: "2", weekday: "Пн", minTemp: "8°", maxTemp: "16°", conditionCode: 1180, isDay: true)
+            .init(id: "1", weekday: settings.string(.today), minTemp: "10°", maxTemp: "18°", conditionCode: 1003, isDay: true, windKph: 14, humidity: 65),
+            .init(id: "2", weekday: "Пн", minTemp: "8°", maxTemp: "16°", conditionCode: 1180, isDay: true, windKph: 22, humidity: 80)
         ]
     )
     WeatherDashboardView(data: sampleData)
@@ -182,6 +173,8 @@ struct WeatherDashboardView: View {
         conditionText: settings.string(.widgetPlaceholderCondition),
         conditionCode: 1180,
         isDay: true,
+        windKph: 32,
+        humidity: 88,
         hourly: [],
         daily: []
     )

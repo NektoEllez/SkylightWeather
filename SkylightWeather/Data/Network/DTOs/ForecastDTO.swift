@@ -22,6 +22,8 @@ nonisolated struct ForecastDTO: Decodable, Sendable {
         let mintemp_c: Double
         let maxtemp_c: Double
         let condition: CurrentWeatherDTO.ConditionDTO
+        let maxwind_kph: Double?
+        let avghumidity: Int?
     }
     
     nonisolated struct HourDTO: Decodable, Sendable {

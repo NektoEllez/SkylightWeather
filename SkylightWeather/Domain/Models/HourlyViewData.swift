@@ -5,7 +5,7 @@
 
 import Foundation
 
-struct HourlyViewData: Identifiable, Sendable {
+struct HourlyViewData: Equatable, Identifiable, Sendable {
         /// Stable ID from API time string (e.g. "2024-01-15 14:00")
     let id: String
     let time: String
@@ -17,4 +17,6 @@ struct HourlyViewData: Identifiable, Sendable {
     let precipitationChance: Int
         /// Wind speed in km/h
     let windKph: Double?
+        /// Humidity 0–100
+    let humidity: Int?
 }

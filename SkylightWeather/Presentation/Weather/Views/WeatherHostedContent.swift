@@ -55,6 +55,8 @@ struct WeatherHostedContent: View {
         conditionText: settings.string(.widgetPlaceholderCondition),
         conditionCode: 1003,
         isDay: true,
+        windKph: 14,
+        humidity: 68,
         hourly: [],
         daily: []
     )

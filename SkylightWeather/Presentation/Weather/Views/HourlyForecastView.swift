@@ -14,7 +14,7 @@ struct HourlyForecastView: View {
     @State private var isInteracting = false
     @State private var centeredHourId: String?
 
-    private let rowHeight: CGFloat = 52
+    private let rowHeight: CGFloat = 64
     private let edgeScale: CGFloat = 0.72
     private let centerInfluenceRows: CGFloat = 2.5
 
@@ -49,9 +49,10 @@ struct HourlyForecastView: View {
             }
         }
         .onAppear {
-            if centeredHourId == nil {
-                centeredHourId = currentAndFutureHours.first?.id
-            }
+            synchronizeCenteredHourId()
+        }
+        .onChange(of: hours) { _, _ in
+            synchronizeCenteredHourId()
         }
     }
 
@@ -155,33 +156,35 @@ struct HourlyForecastView: View {
 
     @ViewBuilder
     private func rowInfoLabel(_ hour: HourlyViewData, isCentered: Bool) -> some View {
-        let opacity = isCentered ? 0.85 : 0.6
-        let font = Font.system(.caption, design: .rounded)
-        let sep = " · "
-        
-        let humidityText: String? = hour.humidity.map {
-            "\(settings.string(.humidityShort)) \($0)%"
-        }
-        
-        let windText: String? = hour.windKph.map {
+        let primaryOpacity: Double = isCentered ? 0.9 : 0.55
+        let secondaryOpacity: Double = isCentered ? 0.65 : 0.38
+
+        let windPart = hour.windKph.map {
             "\(settings.string(.windSpeedShort)) \(Int($0)) \(settings.string(.windUnit))"
         }
-        
-        let precipText: String? = hour.precipitationChance > 0
-        ? "\(settings.string(.precipitationChanceShort)) \(hour.precipitationChance)%"
-        : nil
-        
-        let parts = [humidityText, windText, precipText].compactMap { $0 }
-        
-        if parts.isEmpty {
-            Text(" ")
-                .font(.caption)
-        } else {
-            Text(parts.joined(separator: sep))
-                .font(font)
-                .foregroundStyle(.white.opacity(opacity))
-                .lineLimit(2)
-                .multilineTextAlignment(.trailing)
+        let humPart = hour.humidity.map { "\($0)%" }
+        let secondaryParts = [windPart, humPart].compactMap { $0 }
+
+        VStack(alignment: .trailing, spacing: 1) {
+            // Line 1 — precipitation (primary)
+            if hour.precipitationChance > 0 {
+                Text("\(settings.string(.precipitationChanceShort)) \(hour.precipitationChance)%")
+                    .font(.system(.caption, design: .rounded, weight: isCentered ? .medium : .regular))
+                    .foregroundStyle(.white.opacity(primaryOpacity))
+            } else {
+                Text(" ").font(.caption)
+            }
+
+            // Line 2 — wind + humidity (secondary)
+            if secondaryParts.isEmpty {
+                Text(" ").font(.caption2)
+            } else {
+                Text(secondaryParts.joined(separator: " · "))
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundStyle(.white.opacity(secondaryOpacity))
+                    .minimumScaleFactor(0.85)
+                    .lineLimit(1)
+            }
         }
     }
 
@@ -189,6 +192,14 @@ struct HourlyForecastView: View {
         guard isInteracting != value else { return }
         isInteracting = value
         onInteractionChanged?(value)
+    }
+
+    private func synchronizeCenteredHourId() {
+        let availableIDs = Set(currentAndFutureHours.map(\.id))
+        if let centeredHourId, availableIDs.contains(centeredHourId) {
+            return
+        }
+        centeredHourId = currentAndFutureHours.first?.id
     }
 }
 

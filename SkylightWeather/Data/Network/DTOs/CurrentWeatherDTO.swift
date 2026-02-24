@@ -18,6 +18,8 @@ nonisolated struct CurrentWeatherDTO: Decodable, Sendable {
         let feelslike_c: Double
         let is_day: Int
         let condition: ConditionDTO
+        let wind_kph: Double?
+        let humidity: Int?
     }
     
     nonisolated struct ConditionDTO: Decodable, Sendable {

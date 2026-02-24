@@ -6,13 +6,15 @@
 import SwiftUI
 
 struct DailyForecastView: View {
-    
+
     let days: [DailyViewData]
+    @Environment(\.appSettings) private var settings
+
     private var visibleDays: [DailyViewData] { Array(days.prefix(7)) }
-    
+
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 0) {
+            LazyVStack(spacing: 0) {
                 ForEach(Array(visibleDays.enumerated()), id: \.element.id) { index, day in
                     dayRow(day)
                     if index < visibleDays.count - 1 {
@@ -24,33 +26,67 @@ struct DailyForecastView: View {
             }
         }
     }
-    
-        // MARK: - Subviews
-    
+
+    // MARK: - Subviews
+
     private func dayRow(_ day: DailyViewData) -> some View {
+        VStack(spacing: 0) {
+            mainRow(day)
+            if day.windKph != nil || day.humidity != nil {
+                statsRow(day)
+                    .padding(.bottom, 6)
+            }
+        }
+        .padding(.top, 10)
+        .padding(.horizontal, 6)
+    }
+
+    private func mainRow(_ day: DailyViewData) -> some View {
         HStack {
             Text(day.weekday)
+                .font(.system(.body, design: .rounded))
                 .foregroundStyle(.white)
                 .shadow(color: .black.opacity(0.25), radius: 0.8, y: 0.8)
                 .frame(width: 80, alignment: .leading)
-            
+
             Spacer()
-            
+
             WeatherAnimationView(conditionCode: day.conditionCode, isDay: day.isDay)
                 .frame(width: 28, height: 28)
-            
+
             Spacer()
-            
+
             HStack(spacing: 8) {
                 Text(day.minTemp)
                     .foregroundStyle(.white.opacity(0.86))
                 Text(day.maxTemp)
                     .foregroundStyle(.white)
             }
+            .font(.system(.body, design: .rounded))
             .frame(width: 80, alignment: .trailing)
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 6)
+        .padding(.bottom, 4)
+    }
+
+    @ViewBuilder
+    private func statsRow(_ day: DailyViewData) -> some View {
+        let windPart = day.windKph.map {
+            "\(Int($0)) \(settings.string(.windUnit))"
+        }
+        let humPart = day.humidity.map { "\($0)%" }
+
+        HStack(spacing: 14) {
+            Spacer()
+            if let wind = windPart {
+                Label(wind, systemImage: "wind")
+            }
+            if let hum = humPart {
+                Label(hum, systemImage: "humidity.fill")
+            }
+        }
+        .font(.system(.caption, design: .rounded))
+        .foregroundStyle(.white.opacity(0.6))
+        .minimumScaleFactor(0.85)
     }
 }
 
@@ -59,12 +95,13 @@ struct DailyForecastView: View {
 #Preview {
     let settings = AppSettings.shared
     let sampleDays: [DailyViewData] = [
-        .init(id: "1", weekday: settings.string(.today), minTemp: "10°", maxTemp: "18°", conditionCode: 1003, isDay: true),
-        .init(id: "2", weekday: "Пн", minTemp: "8°", maxTemp: "16°", conditionCode: 1180, isDay: true),
-        .init(id: "3", weekday: "Вт", minTemp: "5°", maxTemp: "12°", conditionCode: 1066, isDay: true)
+        .init(id: "1", weekday: settings.string(.today), minTemp: "10°", maxTemp: "18°", conditionCode: 1003, isDay: true, windKph: 14, humidity: 65),
+        .init(id: "2", weekday: "Пн", minTemp: "8°", maxTemp: "16°", conditionCode: 1180, isDay: true, windKph: 22, humidity: 80),
+        .init(id: "3", weekday: "Вт", minTemp: "5°", maxTemp: "12°", conditionCode: 1066, isDay: true, windKph: 8, humidity: 72)
     ]
     return DailyForecastView(days: sampleDays)
         .padding()
-        .frame(height: 250)
+        .frame(height: 340)
         .background(WeatherGradientColors.colors(for: 1003).first ?? .blue)
+        .environment(\.appSettings, AppSettings.shared)
 }
