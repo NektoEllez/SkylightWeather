@@ -75,7 +75,10 @@ final class AppCoordinator: NSObject {
         didInstallLoadingOverlay = true
 
         navigationController.loadViewIfNeeded()
-        let hostView = navigationController.view!
+        guard let hostView = navigationController.view else {
+            logger.error("Failed to install loading overlay: navigation controller view is nil")
+            return
+        }
 
         loadingOverlay.translatesAutoresizingMaskIntoConstraints = false
         loadingOverlay.alpha = 0
@@ -123,6 +126,10 @@ final class AppCoordinator: NSObject {
 extension AppCoordinator: WeatherViewControllerCoordinating {
     func showSettings(from presenter: UIViewController, appSettings: AppSettings) {
         logger.debug("Presenting settings screen")
+        if presentedSettingsController != nil {
+            logger.debug("Settings screen already presented")
+            return
+        }
         let settingsController = makeSettingsController(appSettings: appSettings)
         presentedSettingsController = settingsController
         presenter.present(settingsController, animated: true)

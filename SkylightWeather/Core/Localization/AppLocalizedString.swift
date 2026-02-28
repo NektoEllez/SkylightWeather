@@ -63,7 +63,13 @@ enum AppLocalizedString: Hashable {
     case windUnit
 
     func localized(for languageCode: String) -> String {
-        let translations: [AppLocalizedString: [String: String]] = [
+        let resolvedLanguage = L10n.resolveLanguageCode(languageCode)
+        return Self.translations[self]?[resolvedLanguage] ?? Self.translations[self]?[L10n.fallbackLanguageCode] ?? ""
+    }
+}
+
+private extension AppLocalizedString {
+    static let translations: [AppLocalizedString: [String: String]] = [
             .appTitle: [
                 "en": "Skylight Weather",
                 "ru": "Skylight Weather"
@@ -285,10 +291,6 @@ enum AppLocalizedString: Hashable {
                 "ru": "км/ч"
             ]
         ]
-        
-        let resolvedLanguage = L10n.resolveLanguageCode(languageCode)
-        return translations[self]?[resolvedLanguage] ?? translations[self]?[L10n.fallbackLanguageCode] ?? ""
-    }
 }
 
 enum L10n {
