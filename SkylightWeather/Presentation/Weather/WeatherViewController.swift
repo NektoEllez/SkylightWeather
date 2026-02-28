@@ -7,6 +7,7 @@ import UIKit
 import SwiftUI
 import Observation
 
+@MainActor
 final class WeatherViewController: UIViewController {
 
     weak var coordinator: (any WeatherViewControllerCoordinating)?
@@ -18,6 +19,7 @@ final class WeatherViewController: UIViewController {
     private var hostingController: UIHostingController<WeatherHostedContent>?
     private var lastObservedLanguageCode: String?
     private var lastNavigationSourceTitle: String?
+    private var observationUpdateTask: Task<Void, Never>?
     private var refreshThrottleTask: Task<Void, Never>?
     private var nextAllowedRefreshAt: Date = .distantPast
 
@@ -77,6 +79,8 @@ final class WeatherViewController: UIViewController {
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         if isMovingFromParent || isBeingDismissed {
+            observationUpdateTask?.cancel()
+            observationUpdateTask = nil
             refreshThrottleTask?.cancel()
             refreshThrottleTask = nil
             coordinator?.setGlobalLoadingVisible(false)
@@ -120,14 +124,17 @@ final class WeatherViewController: UIViewController {
             _ = viewModel.source
             _ = appSettings.colorScheme
             _ = appSettings.languageCode
-        } onChange: { [weak self] in
-            guard let self else { return }
+        } onChange: {
             Task { @MainActor [weak self] in
-                guard let self,
+                guard let self else { return }
+                self.observationUpdateTask?.cancel()
+                self.observationUpdateTask = Task { @MainActor [weak self] in
+                    guard let self,
                       !self.isBeingDismissed,
                       !self.isMovingFromParent else { return }
-                self.applyViewModelChanges()
-                self.observeViewModel()
+                    self.applyViewModelChanges()
+                    self.observeViewModel()
+                }
             }
         }
         render()

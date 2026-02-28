@@ -24,6 +24,9 @@ struct AppRuntimeConfiguration: Sendable {
     let environment: AppEnvironment
     let weatherAPIScheme: String
     let weatherAPIHost: String
+    /// Optional backend proxy base URL (for example: https://weather-proxy.example.com).
+    /// When present, the app sends weather requests to proxy and does not attach provider API key.
+    let weatherProxyBaseURL: String?
     // SECURITY NOTE:
     // Client-side API keys are not truly secret, even when obfuscated.
     // For production security, keep provider credentials encrypted and managed on backend,
@@ -38,17 +41,21 @@ struct AppRuntimeConfiguration: Sendable {
         let scheme = bundle.string(forInfoDictionaryKey: InfoKey.weatherAPIScheme)?.trimmed
         let host = bundle.string(forInfoDictionaryKey: InfoKey.weatherAPIHost)?.trimmed
         let key = bundle.string(forInfoDictionaryKey: InfoKey.weatherAPIKey)?.trimmed
+        let proxyBaseURL = bundle.string(forInfoDictionaryKey: InfoKey.weatherProxyBaseURL)?.trimmed
         
         let resolvedScheme = scheme?.isEmpty == false ? (scheme ?? Defaults.weatherAPIScheme) : Defaults.weatherAPIScheme
         let resolvedHost = host?.isEmpty == false ? (host ?? Defaults.weatherAPIHost) : Defaults.weatherAPIHost
         let resolvedKey = key?.isEmpty == false ? (key ?? Defaults.weatherAPIKey) : Defaults.weatherAPIKey
+        let resolvedProxyBaseURL = proxyBaseURL?.isEmpty == false ? proxyBaseURL : nil
         
         if resolvedScheme == Defaults.weatherAPIScheme,
            resolvedHost == Defaults.weatherAPIHost,
            resolvedKey == Defaults.weatherAPIKey {
             AppLog.network.notice("Runtime config uses fallback values")
         }
-        if resolvedKey.isEmpty {
+        if resolvedProxyBaseURL != nil {
+            AppLog.network.notice("Runtime config uses WEATHER_PROXY_BASE_URL; provider API key is bypassed on client")
+        } else if resolvedKey.isEmpty {
             AppLog.network.error("WEATHER_API_KEY is empty for current environment")
         }
         
@@ -56,6 +63,7 @@ struct AppRuntimeConfiguration: Sendable {
             environment: environment,
             weatherAPIScheme: resolvedScheme,
             weatherAPIHost: resolvedHost,
+            weatherProxyBaseURL: resolvedProxyBaseURL,
             weatherAPIKey: resolvedKey
         )
     }
@@ -66,6 +74,7 @@ private enum InfoKey {
     nonisolated static let weatherAPIScheme = "WEATHER_API_SCHEME"
     nonisolated static let weatherAPIHost = "WEATHER_API_HOST"
     nonisolated static let weatherAPIKey = "WEATHER_API_KEY"
+    nonisolated static let weatherProxyBaseURL = "WEATHER_PROXY_BASE_URL"
 }
 
 private enum Defaults {

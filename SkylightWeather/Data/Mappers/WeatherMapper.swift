@@ -10,19 +10,6 @@ struct WeatherMapper {
     private static let logger = AppLog.mapper
     private static let placeholder = "\u{2014}"
     
-    private static let parseDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        return formatter
-    }()
-    
-    private static let weekdayDisplayFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE"
-        return formatter
-    }()
-    
     static func map(current: CurrentWeatherDTO, forecast: ForecastDTO) -> WeatherViewData {
         let days = forecast.forecast.forecastday
         let languageCode = L10n.currentLanguageCode()
@@ -144,7 +131,7 @@ struct WeatherMapper {
     }
     
     private static func formatWeekday(_ dateString: String, languageCode: String) -> String {
-        guard let date = parseDateFormatter.date(from: dateString) else {
+        guard let date = parseAPIDate(dateString) else {
             logger.error("Invalid date format in forecast: \(dateString, privacy: .public)")
             return placeholder
         }
@@ -153,8 +140,10 @@ struct WeatherMapper {
             return L10n.text(.today, languageCode: languageCode)
         }
         
-        weekdayDisplayFormatter.locale = L10n.locale(for: languageCode)
-        return weekdayDisplayFormatter.string(from: date).capitalized
+        let formatStyle = Date.FormatStyle()
+            .weekday(.abbreviated)
+            .locale(L10n.locale(for: languageCode))
+        return date.formatted(formatStyle).capitalized
     }
 
     private static func extractTimePart(from timeString: String) -> String? {
@@ -162,5 +151,22 @@ struct WeatherMapper {
         guard parts.count == 2 else { return nil }
         let timePart = String(parts[1])
         return timePart.contains(":") ? timePart : nil
+    }
+
+    private static func parseAPIDate(_ value: String) -> Date? {
+        let parts = value.split(separator: "-")
+        guard parts.count == 3,
+              let year = Int(parts[0]),
+              let month = Int(parts[1]),
+              let day = Int(parts[2]) else {
+            return nil
+        }
+        var components = DateComponents()
+        components.calendar = Calendar(identifier: .gregorian)
+        components.timeZone = TimeZone(secondsFromGMT: 0)
+        components.year = year
+        components.month = month
+        components.day = day
+        return components.date
     }
 }
