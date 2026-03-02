@@ -144,7 +144,7 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.menu)
                 .labelsHidden()
-                    .frame(width: 180)
+                    .frame(width: 180, alignment: .leading)
                     .accessibilityIdentifier("settings_language_picker")
                     .listRowInsets(macControlInsets)
 

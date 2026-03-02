@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		44AB82882F4CE11E00D42103 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 44B911812F4C9B0000B3D836 /* Lottie */; };
-		44B911692F4C9A1400B3D836 /* SkylightWeatherWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 44B911602F4C9A1400B3D836 /* SkylightWeatherWidget.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		44B911692F4C9A1400B3D836 /* SkylightWeatherWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 44B911602F4C9A1400B3D836 /* SkylightWeatherWidget.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,15 +36,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		44B9116A2F4C9A1400B3D836 /* Embed App Extensions */ = {
+		44B9116A2F4C9A1400B3D836 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				44B911692F4C9A1400B3D836 /* SkylightWeatherWidget.appex in Embed App Extensions */,
+				44B911692F4C9A1400B3D836 /* SkylightWeatherWidget.appex in Embed Foundation Extensions */,
 			);
-			name = "Embed App Extensions";
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -165,7 +165,7 @@
 				44B911302F4C9A1300B3D836 /* Sources */,
 				44B911312F4C9A1300B3D836 /* Frameworks */,
 				44B911322F4C9A1300B3D836 /* Resources */,
-				44B9116A2F4C9A1400B3D836 /* Embed App Extensions */,
+				44B9116A2F4C9A1400B3D836 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -261,7 +261,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2620;
-				LastUpgradeCheck = 2620;
+				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					44B911332F4C9A1300B3D836 = {
 						CreatedOnToolsVersion = 26.2;
@@ -392,6 +392,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -421,6 +422,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = R884VRLUZ7;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -444,6 +446,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -454,6 +457,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -483,6 +487,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = R884VRLUZ7;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -499,6 +504,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
