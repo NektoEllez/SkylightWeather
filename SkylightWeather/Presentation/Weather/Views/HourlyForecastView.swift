@@ -7,17 +7,27 @@ import SwiftUI
 
 struct HourlyForecastView: View {
 
+    private enum Layout {
+        static let wheelRowHeight: CGFloat = 52
+        static let pastStripHeight: CGFloat = 56
+        static let headerHeight: CGFloat = 156
+        static let separatorHeight: CGFloat = 1
+    }
+
     let hours: [HourlyViewData]
     var onInteractionChanged: ((Bool) -> Void)?
 
     @Environment(\.appSettings) private var settings
     @State private var isPagerLocked = false
     @State private var selectedHourId: String?
-    private let wheelRowHeight: CGFloat = 52
 
-    private var visibleHours: [HourlyViewData] { Array(hours.prefix(24)) }
+    private var visibleHours: [HourlyViewData] {
+        Array(hours.prefix(24))
+    }
 
-    private var nowIndex: Int? { visibleHours.firstIndex(where: { $0.isNow }) }
+    private var nowIndex: Int? {
+        visibleHours.firstIndex(where: { $0.isNow })
+    }
 
     private var pastHours: [HourlyViewData] {
         guard let idx = nowIndex, idx > 0 else { return [] }
@@ -40,20 +50,10 @@ struct HourlyForecastView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let headerHeight: CGFloat = 156
-            let separatorHeight: CGFloat = 1
-            let scrollAreaHeight = geometry.size.height - (pastHours.isEmpty ? 0 : (pastStripHeight + 1)) - headerHeight - separatorHeight
             VStack(spacing: 0) {
-                if let selectedHour {
-                    selectedHourHeader(selectedHour)
-                        .frame(height: headerHeight)
-                    stripSeparator
-                }
-                if !pastHours.isEmpty {
-                    pastHoursStrip
-                    stripSeparator
-                }
-                futureScroll(containerHeight: scrollAreaHeight)
+                headerSection
+                pastHoursSection
+                futureHoursSection(totalHeight: geometry.size.height)
             }
         }
         .onChange(of: hours, initial: true) { _, _ in
@@ -68,20 +68,46 @@ struct HourlyForecastView: View {
         }
     }
 
-    private var pastStripHeight: CGFloat { 56 }
-
-    // MARK: - Past hours (outside scroll, gray)
-
-    private var pastHoursStrip: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 14) {
-                ForEach(pastHours) { hour in
-                    pastChip(hour)
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 10)
+    @ViewBuilder
+    private var headerSection: some View {
+        if let selectedHour {
+            selectedHourHeader(selectedHour)
+                .frame(height: Layout.headerHeight)
+            stripSeparator
         }
+    }
+
+    @ViewBuilder
+    private var pastHoursSection: some View {
+        if !pastHours.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) {
+                    ForEach(pastHours) { hour in
+                        pastChip(hour)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+            }
+            .frame(height: Layout.pastStripHeight)
+            stripSeparator
+        }
+    }
+
+    private func futureHoursSection(totalHeight: CGFloat) -> some View {
+        let scrollAreaHeight = totalHeight
+            - (pastHours.isEmpty ? 0 : (Layout.pastStripHeight + Layout.separatorHeight))
+            - Layout.headerHeight
+            - Layout.separatorHeight
+
+        return futureScroll(containerHeight: scrollAreaHeight)
+    }
+
+    private var stripSeparator: some View {
+        Rectangle()
+            .fill(.white.opacity(0.15))
+            .frame(height: 0.5)
+            .padding(.horizontal, 16)
     }
 
     private func pastChip(_ hour: HourlyViewData) -> some View {
@@ -94,13 +120,6 @@ struct HourlyForecastView: View {
                 .font(.system(.caption2, design: .rounded, weight: .medium))
         }
         .foregroundStyle(.white.opacity(0.45))
-    }
-
-    private var stripSeparator: some View {
-        Rectangle()
-            .fill(.white.opacity(0.15))
-            .frame(height: 0.5)
-            .padding(.horizontal, 16)
     }
 
     private func selectedHourHeader(_ hour: HourlyViewData) -> some View {
@@ -138,14 +157,42 @@ struct HourlyForecastView: View {
         let windPart = hour.windKph.map {
             "\(settings.string(.windSpeedShort)) \(Int($0)) \(settings.string(.windUnit))"
         }
+
         return [precipPart, humidityPart, windPart]
             .compactMap { $0 }
             .joined(separator: " · ")
     }
 
-    // MARK: - Current + future (native wheel picker)
-
+    @ViewBuilder
     private func futureScroll(containerHeight: CGFloat) -> some View {
+        let content = Group {
+            #if os(iOS)
+            iOSFuturePicker
+            #else
+            macFutureList
+            #endif
+        }
+        .clipped()
+        .frame(maxWidth: .infinity)
+        .frame(height: max(containerHeight, 0))
+
+        #if os(iOS)
+        content.simultaneousGesture(
+            DragGesture(minimumDistance: 4)
+                .onChanged { _ in
+                    setPagerLockState(true)
+                }
+                .onEnded { _ in
+                    setPagerLockState(false)
+                }
+        )
+        #else
+        content
+        #endif
+    }
+
+    #if os(iOS)
+    private var iOSFuturePicker: some View {
         Picker("", selection: $selectedHourId) {
             ForEach(currentAndFutureHours) { hour in
                 wheelRow(hour)
@@ -154,12 +201,42 @@ struct HourlyForecastView: View {
         }
         .labelsHidden()
         .pickerStyle(.wheel)
-        .clipped()
-        .frame(height: max(containerHeight, 0))
         .accessibilityIdentifier("hourly_inner_scroll")
     }
+    #endif
 
-    // MARK: - Row
+    #if os(macOS)
+    private var macFutureList: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.vertical, showsIndicators: false) {
+                LazyVStack(spacing: 0) {
+                    ForEach(currentAndFutureHours) { hour in
+                        Button {
+                            selectedHourId = hour.id
+                        } label: {
+                            wheelRow(hour)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(selectedHourId == hour.id ? .white.opacity(0.14) : .clear)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .id(hour.id)
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+            }
+            .accessibilityIdentifier("hourly_inner_scroll")
+            .onChange(of: selectedHourId, initial: true) { _, newValue in
+                guard let newValue else { return }
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    proxy.scrollTo(newValue, anchor: .center)
+                }
+            }
+        }
+    }
+    #endif
 
     private func wheelRow(_ hour: HourlyViewData) -> some View {
         let timeText = hour.isNow ? settings.string(.now) : hour.time
@@ -183,7 +260,7 @@ struct HourlyForecastView: View {
                 .frame(width: 48, alignment: .trailing)
         }
         .padding(.horizontal, 16)
-        .frame(height: wheelRowHeight)
+        .frame(height: Layout.wheelRowHeight)
         .contentShape(Rectangle())
     }
 
@@ -201,29 +278,6 @@ struct HourlyForecastView: View {
             return "cloud.bolt.rain.fill"
         default:
             return "cloud.fill"
-        }
-    }
-
-    @ViewBuilder
-    private func rowInfoLabel(_ hour: HourlyViewData) -> some View {
-        let windPart = hour.windKph.map {
-            "\(settings.string(.windSpeedShort)) \(Int($0)) \(settings.string(.windUnit))"
-        }
-        let humPart = hour.humidity.map { "\($0)%" }
-        let precipPart = hour.precipitationChance > 0
-            ? "\(settings.string(.precipitationChanceShort)) \(hour.precipitationChance)%"
-            : nil
-        let parts = [precipPart, windPart, humPart].compactMap { $0 }
-
-        if parts.isEmpty {
-            Text(" ")
-                .font(.system(.caption, design: .rounded))
-        } else {
-            Text(parts.joined(separator: " · "))
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.white.opacity(0.78))
-                .minimumScaleFactor(0.85)
-                .lineLimit(1)
         }
     }
 

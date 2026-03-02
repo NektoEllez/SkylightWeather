@@ -4,6 +4,13 @@
     //
 
 import SwiftUI
+#if os(iOS)
+import UIKit
+private typealias PlatformColor = UIColor
+#else
+import AppKit
+private typealias PlatformColor = NSColor
+#endif
 
 struct WeatherHostedContent: View {
     
@@ -20,7 +27,7 @@ struct WeatherHostedContent: View {
                     if let lastContent {
                         WeatherDashboardView(data: lastContent)
                     } else {
-                        Color(.systemBackground)
+                        Color(platformBackground)
                             .ignoresSafeArea()
                     }
                 case .content(let data):
@@ -33,7 +40,7 @@ struct WeatherHostedContent: View {
                         onAction: onRetry
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(.systemBackground))
+                    .background(Color(platformBackground))
                 case .cityNotFound(let message):
                     ErrorView(
                         message: message,
@@ -42,13 +49,21 @@ struct WeatherHostedContent: View {
                         onAction: onAcknowledgeInvalidCity
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(.systemBackground))
+                    .background(Color(platformBackground))
             }
         }
         .environment(\.appSettings, appSettings)
         .preferredColorScheme(appSettings.colorScheme)
     }
 }
+
+    private var platformBackground: PlatformColor {
+        #if os(iOS)
+        .systemBackground
+        #else
+        .windowBackgroundColor
+        #endif
+    }
 
     // MARK: - Preview
 

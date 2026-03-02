@@ -1,7 +1,7 @@
-    //
-    //  CitySearchView.swift
-    //  SkylightWeather
-    //
+//
+//  CitySearchView.swift
+//  SkylightWeather
+//
 
 import SwiftUI
 
@@ -9,10 +9,10 @@ struct CitySearchView: View {
     @Environment(\.appSettings) private var settings
     @State private var viewModel: CitySearchViewModel
     @FocusState private var isSearchFocused: Bool
-    
+
     let onSelect: (String) -> Void
     let onCancel: () -> Void
-    
+
     init(
         initialQuery: String? = nil,
         onSelect: @escaping (String) -> Void,
@@ -22,7 +22,7 @@ struct CitySearchView: View {
         self.onSelect = onSelect
         self.onCancel = onCancel
     }
-    
+
     var body: some View {
         VStack(spacing: 8) {
             searchField
@@ -67,31 +67,49 @@ struct CitySearchView: View {
         }
         .background(.ultraThinMaterial.opacity(0.25))
         .navigationTitle(settings.string(.citySelectionTitle))
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         .textInputAutocapitalization(.words)
-        .autocorrectionDisabled(true)
         .ignoresSafeArea(.keyboard, edges: .bottom)
+        #endif
+        .autocorrectionDisabled(true)
         .task { @MainActor in
             guard !Task.isCancelled else { return }
             isSearchFocused = true
         }
         .toolbar {
+            #if os(iOS)
             ToolbarItem(placement: .topBarLeading) {
-                Button(settings.string(.cancel)) {
-                    HapticManager.shared.lightImpact()
-                    onCancel()
-                }
-                .accessibilityIdentifier("city_search_cancel_button")
+                cancelButton
             }
-            
             ToolbarItem(placement: .topBarTrailing) {
-                Button(settings.string(.showWeather)) {
-                    submitManualCity()
-                }
-                .disabled(trimmedQuery.isEmpty)
-                .accessibilityIdentifier("city_search_submit_button")
+                submitButton
             }
+            #else
+            ToolbarItem(placement: .cancellationAction) {
+                cancelButton
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                submitButton
+            }
+            #endif
         }
+    }
+
+    private var cancelButton: some View {
+        Button(settings.string(.cancel)) {
+            HapticManager.shared.lightImpact()
+            onCancel()
+        }
+        .accessibilityIdentifier("city_search_cancel_button")
+    }
+
+    private var submitButton: some View {
+        Button(settings.string(.showWeather)) {
+            submitManualCity()
+        }
+        .disabled(trimmedQuery.isEmpty)
+        .accessibilityIdentifier("city_search_submit_button")
     }
 
     private var searchField: some View {
@@ -107,7 +125,9 @@ struct CitySearchView: View {
                 )
             )
             .focused($isSearchFocused)
+            #if os(iOS)
             .submitLabel(.search)
+            #endif
             .onSubmit {
                 submitManualCity()
             }
@@ -130,11 +150,11 @@ struct CitySearchView: View {
         .padding(.horizontal, 12)
         .padding(.top, 4)
     }
-    
+
     private var trimmedQuery: String {
         viewModel.query.trimmed
     }
-    
+
     private func hintRow(_ text: String) -> some View {
         Text(text)
             .foregroundStyle(.secondary)
@@ -142,7 +162,7 @@ struct CitySearchView: View {
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
     }
-    
+
     private func submitManualCity() {
         guard !trimmedQuery.isEmpty else { return }
         HapticManager.shared.mediumImpact()

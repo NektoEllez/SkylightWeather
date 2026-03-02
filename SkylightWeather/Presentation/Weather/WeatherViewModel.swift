@@ -23,6 +23,11 @@ final class WeatherViewModel {
     
     var state: ViewState = .loading
     var source: WeatherRequestSource
+
+    var isLoading: Bool {
+        if case .loading = state { return true }
+        return false
+    }
     var lastUpdatedAt: Date?
     private(set) var lastSuccessfulData: WeatherViewData?
     
@@ -48,7 +53,7 @@ final class WeatherViewModel {
             preferencesStore: WeatherPreferencesStore()
         )
     }
-    
+
     func loadWeather() {
         load(source: source)
     }
@@ -77,6 +82,16 @@ final class WeatherViewModel {
         logger.debug("Starting weather load")
         loadTask?.cancel()
         state = .loading
+
+        if AppRuntimeConfiguration.isUITestMode {
+            logger.notice("UI_TEST_MODE enabled, using deterministic weather payload")
+            let data = makeUITestData(for: source)
+            lastSuccessfulData = data
+            state = .content(data)
+            lastUpdatedAt = Date()
+            rollbackSourceAfterInvalidCity = nil
+            return
+        }
         
         loadTask = Task { [weak self] in
             guard let self else { return }
@@ -98,7 +113,10 @@ final class WeatherViewModel {
                 return
             } catch {
                 guard !Task.isCancelled else { return }
-                self.logger.error("Weather load failed: \(error.localizedDescription, privacy: .public)")
+                let errorType = String(describing: type(of: error))
+                self.logger.error(
+                    "Weather load failed [\(errorType, privacy: .public)]: \(error.localizedDescription, privacy: .private(mask: .hash))"
+                )
                 if case APIError.cityNotFound = error,
                    case .city = source {
                     self.state = .cityNotFound(L10n.text(.invalidCityWarning))
@@ -131,5 +149,28 @@ final class WeatherViewModel {
             case .city(let city):
                 preferencesStore.saveSelectedCity(city)
         }
+    }
+
+    private func makeUITestData(for source: WeatherRequestSource) -> WeatherViewData {
+        let locationName: String
+        switch source {
+        case .city(let city):
+            locationName = city
+        case .currentLocation:
+            locationName = PreviewWeatherData.sample.locationName
+        }
+
+        return WeatherViewData(
+            locationName: locationName,
+            temperature: PreviewWeatherData.sample.temperature,
+            feelsLike: PreviewWeatherData.sample.feelsLike,
+            conditionText: PreviewWeatherData.sample.conditionText,
+            conditionCode: PreviewWeatherData.sample.conditionCode,
+            isDay: PreviewWeatherData.sample.isDay,
+            windKph: PreviewWeatherData.sample.windKph,
+            humidity: PreviewWeatherData.sample.humidity,
+            hourly: PreviewWeatherData.sample.hourly,
+            daily: PreviewWeatherData.sample.daily
+        )
     }
 }

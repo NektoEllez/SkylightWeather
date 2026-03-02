@@ -60,6 +60,7 @@ struct WeatherDashboardView: View {
             card(at: index)
         }
         .accessibilityIdentifier("weather_cards_pager")
+        .accessibilityValue("\((selectedCard ?? 0) + 1)/3")
         .frame(height: 468)
     }
 

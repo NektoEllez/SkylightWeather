@@ -21,6 +21,10 @@ final class LocationService {
     private var isAwaitingAuthorization = false
     private var timeoutTask: Task<Void, Never>?
     private let requestTimeout: Duration = .seconds(12)
+
+    deinit {
+        timeoutTask?.cancel()
+    }
     
     func requestLocation() async -> CLLocationCoordinate2D {
         let status = manager.authorizationStatus
@@ -46,7 +50,11 @@ final class LocationService {
                 if status == .notDetermined {
                     logger.debug("Location permission not determined, requesting authorization")
                     isAwaitingAuthorization = true
+                    #if os(macOS)
+                    manager.requestAlwaysAuthorization()
+                    #else
                     manager.requestWhenInUseAuthorization()
+                    #endif
                 } else {
                     isAwaitingAuthorization = false
                     manager.requestLocation()

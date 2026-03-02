@@ -1,23 +1,36 @@
-    //
-    //  AppDelegate.swift
-    //  SkylightWeather
-    //
+//
+//  SkylightWeatherApp.swift
+//  SkylightWeather
+//
 
-import UIKit
+import SwiftUI
 import os
 
 @main
-class AppDelegate: UIResponder, UIApplicationDelegate {
-    
-    func application(
-        _ application: UIApplication,
-        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
-    ) -> Bool {
+struct SkylightWeatherApp: App {
+
+    @State private var appSettings = AppSettings.shared
+
+    init() {
+        #if os(iOS)
         configureNavigationBarAppearance()
+        #endif
         AppLog.ui.info("App launched in \(AppRuntimeConfiguration.shared.environment.rawValue, privacy: .public) environment")
-        return true
     }
-    
+
+    var body: some Scene {
+        WindowGroup {
+            WeatherView()
+                .environment(\.appSettings, appSettings)
+                .preferredColorScheme(appSettings.colorScheme)
+        }
+        #if os(macOS)
+        .defaultSize(width: 420, height: 780)
+        .windowResizability(.contentMinSize)
+        #endif
+    }
+
+    #if os(iOS)
     private func configureNavigationBarAppearance() {
         let appearance = UINavigationBarAppearance()
         appearance.configureWithDefaultBackground()
@@ -30,17 +43,5 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         bar.compactScrollEdgeAppearance = appearance
         bar.tintColor = .label
     }
-    
-        // MARK: - UISceneSession Lifecycle
-    
-    func application(
-        _ application: UIApplication,
-        configurationForConnecting connectingSceneSession: UISceneSession,
-        options: UIScene.ConnectionOptions
-    ) -> UISceneConfiguration {
-        UISceneConfiguration(
-            name: "Default Configuration",
-            sessionRole: connectingSceneSession.role
-        )
-    }
+    #endif
 }

@@ -34,6 +34,11 @@ struct AppRuntimeConfiguration: Sendable {
     let weatherAPIKey: String
     
     nonisolated static let shared = load()
+    nonisolated static var isUITestMode: Bool {
+        let processInfo = ProcessInfo.processInfo
+        return processInfo.arguments.contains("UI_TEST_MODE")
+            || processInfo.environment["UI_TEST_MODE"] == "1"
+    }
     
     nonisolated private static func load(bundle: Bundle = .main) -> AppRuntimeConfiguration {
         let environment = AppEnvironment(rawValueOrFallback: bundle.string(forInfoDictionaryKey: InfoKey.environment))

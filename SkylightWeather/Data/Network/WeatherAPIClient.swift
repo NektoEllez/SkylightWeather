@@ -92,7 +92,7 @@ final class WeatherAPIClient: WeatherAPIClientProtocol, Sendable {
                 AppLog.network.error("Weather API server error: \(http.statusCode)")
                 if let payload = decodeServerError(from: data),
                    Self.cityNotFoundCodes.contains(payload.code) {
-                    AppLog.network.error("Weather API city not found: \(payload.message, privacy: .public)")
+                    AppLog.network.error("Weather API city not found (code: \(payload.code))")
                     throw APIError.cityNotFound
                 }
                 throw APIError.server(http.statusCode)
@@ -101,7 +101,7 @@ final class WeatherAPIClient: WeatherAPIClientProtocol, Sendable {
             do {
                 return try Self.decoder.decode(T.self, from: data)
             } catch {
-                AppLog.network.error("Weather API decoding error: \(error.localizedDescription, privacy: .public)")
+                AppLog.network.error("Weather API decoding error")
                 throw APIError.decoding(error)
             }
         } catch is CancellationError {
@@ -109,10 +109,10 @@ final class WeatherAPIClient: WeatherAPIClientProtocol, Sendable {
         } catch let error as APIError {
             throw error
         } catch let error as URLError {
-            AppLog.network.error("Weather API network error: \(error.localizedDescription, privacy: .public)")
+            AppLog.network.error("Weather API network error: \(error.code.rawValue)")
             throw APIError.network(error)
         } catch {
-            AppLog.network.error("Weather API unknown error: \(error.localizedDescription, privacy: .public)")
+            AppLog.network.error("Weather API unknown error")
             throw APIError.unknown
         }
     }
@@ -121,7 +121,7 @@ final class WeatherAPIClient: WeatherAPIClientProtocol, Sendable {
         do {
             return try Self.decoder.decode(APIErrorEnvelope.self, from: data).error
         } catch {
-            AppLog.network.debug("Server error payload decode failed: \(error.localizedDescription)")
+            AppLog.network.debug("Server error payload decode failed")
             return nil
         }
     }

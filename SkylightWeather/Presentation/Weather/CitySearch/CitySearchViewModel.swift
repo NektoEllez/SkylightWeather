@@ -30,7 +30,7 @@ final class CitySearchViewModel: NSObject {
             updateQuery(normalized)
         }
     }
-    
+
     func updateQuery(_ value: String) {
         query = value
         scheduleSearch(for: value)
@@ -71,7 +71,7 @@ final class CitySearchViewModel: NSObject {
     }
     
     private func handleCompletionError(_ error: Error) {
-        logger.error("City suggestions failed: \(error.localizedDescription, privacy: .public)")
+        logger.error("City suggestions failed: \(String(describing: type(of: error)), privacy: .public)")
         suggestions = []
         isLoading = false
     }
