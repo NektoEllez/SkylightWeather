@@ -1,7 +1,25 @@
-# Xcode
+# Xcode / Apple build artifacts
 build/
 DerivedData/
+Products/
+*.app
+*.appex
+*.dSYM
+*.dSYM.zip
+*.xctest
+*.xcresult
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
 xcuserdata/
+*.xcuserstate
+*.moved-aside
+*.ipa
+
+# Xcode local files
+override.xcconfig
+*.mode1v3
+*.mode2v3
+*.perspectivev3
 
 # Swift Package Manager (Lottie)
 .build/
@@ -15,6 +33,8 @@ Package.resolved
 .claude/
 .clinerules-*
 .cursor/
+.idea/
+.vscode/
 
 # Local secrets
 Secrets.xcconfig

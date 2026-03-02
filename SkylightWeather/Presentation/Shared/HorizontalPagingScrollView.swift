@@ -38,7 +38,7 @@ struct HorizontalPagingScrollView<Content: View>: View {
                 .padding(.vertical, verticalPadding)
                 .background(Color.clear)
             }
-            .scrollPosition(id: $selectedIndex)
+            .scrollPosition(id: $selectedIndex, anchor: .center)
             .scrollDisabled(!scrollEnabled)
             .scrollTargetBehavior(.viewAligned)
             .scrollIndicators(.hidden)
