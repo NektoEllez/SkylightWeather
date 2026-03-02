@@ -24,7 +24,6 @@ override.xcconfig
 # Swift Package Manager (Lottie)
 .build/
 .swiftpm/
-Package.resolved
 
 # macOS
 .DS_Store
@@ -32,9 +31,29 @@ Package.resolved
 # IDE / tooling (Claude, Cursor, Cline)
 .claude/
 .clinerules-*
-.cursor/
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
 .idea/
 .vscode/
 
 # Local secrets
 Secrets.xcconfig
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.p8
+*.cer
+*.der
+*.pfx
+GoogleService-Info.plist
+credentials.json
+client_secret*.json
+service-account*.json
+
+# Safe templates (allowed in repo)
+!Secrets.xcconfig.example
+!.env.example
+!.env.sample
